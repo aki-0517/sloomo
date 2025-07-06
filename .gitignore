@@ -1,0 +1,158 @@
+# React Native
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Metro bundler
+.metro-health-check*
+
+# Build artifacts
+android/app/build/
+android/build/
+ios/build/
+ios/DerivedData/
+
+# Gradle
+android/.gradle/
+android/gradle/wrapper/gradle-wrapper.jar
+
+# Android Studio
+android/.idea/
+android/local.properties
+android/keystore.properties
+
+# iOS
+ios/Pods/
+ios/*.xcworkspace
+ios/*.xcuserdata/
+ios/build/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+*.log
+logs/
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+.nyc_output
+
+# Cache
+.cache/
+.parcel-cache/
+.temp/
+.tmp/
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# React Native specific
+*.hprof
+.flipper/
+
+# Supabase
+.supabase/
+
+# APK files
+*.apk
+*.aab
+
+# Keystore files
+*.keystore
+*.jks
+
+# Bundle artifact
+*.jsbundle
+
+# CocoaPods
+ios/Pods/
+ios/Podfile.lock
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test
+
+# parcel-bundler cache (https://parceljs.org/)
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Local database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Backup files
+*.backup
+*.bak
+
+# Security files
+*.pem
+*.key
+*.crt
+*.cert
