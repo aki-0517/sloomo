@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+**Important: This project is developed on Mac, assuming that you do not have a physical Android device at hand. All development and testing are intended to be performed using the Android emulator on Mac. Emulator-based development and verification is the default workflow.**
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
