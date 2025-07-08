@@ -105,6 +105,25 @@ adb shell am start -n com.solana.mobile.expo.template/.MainActivity
 
 ## 開発サーバーの起動
 
+### 完全な開発手順
+
+以下の手順で、エミュレーターでの開発を開始してください：
+
+```bash
+# 1. Androidエミュレーターが起動していることを確認
+adb devices
+
+# 2. カスタム開発ビルドを作成（初回のみ）
+npx eas build --profile development --platform android --local
+
+# 3. APKをエミュレーターにインストール（初回のみ）
+find /var/folders -name "*.apk" -type f 2>/dev/null | head -5
+adb install [APKファイルのパス]
+
+# 4. 開発サーバーを起動
+npx expo start --dev-client
+```
+
 ### Metro Bundler起動
 
 ```bash
@@ -114,6 +133,26 @@ npx expo start --dev-client
 # 別ポートで起動する場合
 PORT=8082 npx expo start --dev-client --port 8082
 ```
+
+### 開発サーバー起動後の確認事項
+
+開発サーバーが正常に起動すると、以下のような出力が表示されます：
+
+```
+Starting project at /Users/user/Desktop/credit-pay/credit-pay
+Starting Metro Bundler
+› Opening exp+credit-pay://expo-development-client/?url=http%3A%2F%2F100.84.9.63%3A8081 on [Device Name]
+Waiting on http://localhost:8081
+Android Bundled 7021ms node_modules/expo/AppEntry.js (1356 modules)
+```
+
+この状態で、エミュレーター上のアプリに変更が自動的に反映されます。
+
+### 開発中の便利なコマンド
+
+- **リロード**: ターミナルで `r` を押す
+- **DevTools**: ターミナルで `j` を押す（Chrome/Edge必要）
+- **サーバー停止**: `Ctrl+C`
 
 ## Solanaウォレットのセットアップ
 
