@@ -4,6 +4,8 @@
 
 ## 概要
 
+# プロダクト名: Sloomo
+
 * Bloomo の「Target Portfolio」機能をベースに、**Pie Chart ＋ Allocation Table** でポートフォリオ編集を行う投資 UI を踏襲する。([bloomapp.com][1], [play.google.com][2])
 * チャートは **victory-native** と **react-native-reanimated** を組み合わせ、高パフォーマンスでアニメーション対応。([commerce.nearform.com][3], [github.com][4])
 * 取扱銘柄は Solana 上の主要 Stablecoin（金利付き）を初期ロードし、Solend や Meteora など利回り情報を API 経由で取得。([helius.dev][5], [squads.so][6], [reddit.com][7])

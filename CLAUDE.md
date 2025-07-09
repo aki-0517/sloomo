@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Package Manager
+
+**Use yarn as the package manager for this project.**
+
+All dependency management and script execution should use yarn instead of npm:
+- `yarn install` instead of `npm install`
+- `yarn add <package>` instead of `npm install <package>`
+- `yarn run <script>` instead of `npm run <script>`
+
 ## Project Structure
 
 This is a Solana Mobile dApp built with React Native and Expo. The project has a dual structure:
@@ -15,23 +24,23 @@ The active development should focus on the `credit-pay/` directory which contain
 
 ### Root Level Commands (Legacy React Native)
 ```bash
-npm run android        # Run Android app
-npm run start         # Start React Native packager
-npm run test          # Run Jest tests
-npm run lint          # Run ESLint
-npm run typecheck     # Run TypeScript type checking
-npm run build:android # Build Android release
+yarn android        # Run Android app
+yarn start         # Start React Native packager
+yarn test          # Run Jest tests
+yarn lint          # Run ESLint
+yarn typecheck     # Run TypeScript type checking
+yarn build:android # Build Android release
 ```
 
 ### Expo App Commands (credit-pay/)
 ```bash
 cd credit-pay
-npm run start         # Start Expo dev server
-npm run android       # Start Android development build
-npm run ios          # Start iOS development build
-npm run web          # Start web development
-npm run build        # Build using EAS Build
-npm run build:local  # Build locally using EAS
+yarn start         # Start Expo dev server
+yarn android       # Start Android development build
+yarn ios          # Start iOS development build
+yarn web          # Start web development
+yarn build        # Build using EAS Build
+yarn build:local  # Build locally using EAS
 ```
 
 ## Architecture Overview
@@ -120,5 +129,5 @@ Currently minimal test setup:
 1. Work primarily in the `credit-pay/` directory
 2. Use Expo development builds, not Expo Go
 3. Test on Android devices/emulators with MWA-compatible wallets
-4. Run `npm run typecheck` and `npm run lint` before committing
+4. Run `yarn typecheck` and `yarn lint` before committing
 5. Use EAS Build for production builds targeting Solana dApp Store

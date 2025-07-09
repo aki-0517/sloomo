@@ -35,6 +35,8 @@ import {
 type RootStackParamList = {
   Home: undefined;
   Settings: undefined;
+  EditPortfolio: undefined;
+  AssetDetail: { symbol: string };
   // 🔥 Your screens go here
 };
 
@@ -56,6 +58,16 @@ const AppStack = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen name="Settings" component={Screens.SettingsScreen} />
+      <Stack.Screen 
+        name="EditPortfolio" 
+        component={Screens.EditPortfolioScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="AssetDetail" 
+        component={Screens.AssetDetailScreen}
+        options={{ headerShown: false }}
+      />
       {/** 🔥 Your screens go here */}
     </Stack.Navigator>
   );

@@ -1,7 +1,10 @@
 import { getRandomValues as expoCryptoGetRandomValues } from "expo-crypto";
 import { Buffer } from "buffer";
 
+console.log('Loading polyfills...');
+
 global.Buffer = Buffer;
+console.log('Buffer polyfill loaded');
 
 // getRandomValues polyfill
 class Crypto {
@@ -19,3 +22,6 @@ const webCrypto = typeof crypto !== "undefined" ? crypto : new Crypto();
     });
   }
 })();
+
+console.log('Crypto polyfill loaded');
+console.log('All polyfills loaded successfully');
