@@ -206,12 +206,11 @@ export class YieldBearingStablecoinDeployer {
       TOKEN_2022_PROGRAM_ID
     );
 
-    const instructions = [];
+    const transaction = new Transaction();
 
     // Check if ATA exists, if not create it
-    try {
-      await this.connection.getAccountInfo(recipientAta);
-    } catch {
+    const accountInfo = await this.connection.getAccountInfo(recipientAta);
+    if (!accountInfo) {
       const createAtaInstruction = createAssociatedTokenAccountInstruction(
         this.payer.publicKey,
         recipientAta,
@@ -219,11 +218,20 @@ export class YieldBearingStablecoinDeployer {
         mintPubkey,
         TOKEN_2022_PROGRAM_ID
       );
-      instructions.push(createAtaInstruction);
+      transaction.add(createAtaInstruction);
+    }
+
+    // Send transaction to create ATA if needed
+    if (transaction.instructions.length > 0) {
+      await sendAndConfirmTransaction(
+        this.connection,
+        transaction,
+        [this.payer]
+      );
     }
 
     // Mint tokens
-    await mintTo(
+    const signature = await mintTo(
       this.connection,
       this.payer,
       mintPubkey,
@@ -235,7 +243,7 @@ export class YieldBearingStablecoinDeployer {
       TOKEN_2022_PROGRAM_ID
     );
 
-    return "mint_completed"; // mintTo doesn't return signature directly
+    return signature;
   }
 
   /**
