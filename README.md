@@ -46,19 +46,14 @@ Sloomo consists of the following main components:
 ### Blockchain Integration
 - **Solana Blockchain** (Devnet/Mainnet)
 - **Anchor Framework** for smart contract development
-- **SPL Token 2022** for advanced token features
 - **Mobile Wallet Adapter** for secure wallet interactions
 - **Multi-RPC Support** for reliability (Helius, QuickNode)
 
 ### Data Layer
-- **xStock API Integration** for live equity data and tokenization
-- **Real-time Price APIs** for market data
-- **AsyncStorage** for offline functionality
-- **Background Sync** for automatic data updates
+- **Pyth Price Fetching** for real-time market data
 
 ### Development Tools
 - **Yarn** for package management
-- **EAS Build** for cloud builds
 - **Jest** for testing
 - **ESLint** for code quality
 
