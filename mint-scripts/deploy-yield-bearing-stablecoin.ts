@@ -22,6 +22,7 @@ import {
 } from "@solana/spl-token";
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 
 interface DeploymentConfig {
   tokenName: string;
@@ -42,6 +43,20 @@ interface DeploymentResult {
 }
 
 /**
+ * Load CLI wallet keypair from default Solana config
+ */
+function loadCliWallet(): Keypair {
+  const configPath = path.join(os.homedir(), '.config', 'solana', 'id.json');
+  
+  if (!fs.existsSync(configPath)) {
+    throw new Error(`CLI wallet not found at ${configPath}. Run 'solana-keygen new' first.`);
+  }
+  
+  const keyData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  return Keypair.fromSecretKey(new Uint8Array(keyData));
+}
+
+/**
  * Deploy a yield-bearing stablecoin test token to Solana devnet
  */
 export class YieldBearingStablecoinDeployer {
@@ -50,7 +65,7 @@ export class YieldBearingStablecoinDeployer {
 
   constructor(payerKeypair?: Keypair) {
     this.connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-    this.payer = payerKeypair || Keypair.generate();
+    this.payer = payerKeypair || loadCliWallet();
   }
 
   /**
@@ -295,12 +310,34 @@ export class YieldBearingStablecoinDeployer {
   /**
    * Request devnet SOL airdrop for the payer
    */
-  async requestAirdrop(lamports: number = 2000000000): Promise<string> {
-    console.log(`💧 Requesting ${lamports / 1e9} SOL airdrop...`);
-    const signature = await this.connection.requestAirdrop(this.payer.publicKey, lamports);
-    await this.connection.confirmTransaction(signature);
-    console.log(`✅ Airdrop completed: ${signature}`);
-    return signature;
+  async requestAirdrop(lamports: number = 2000000000): Promise<string | null> {
+    try {
+      // Check current balance first
+      const currentBalance = await this.connection.getBalance(this.payer.publicKey);
+      const currentSOL = currentBalance / 1e9;
+      const requestedSOL = lamports / 1e9;
+      
+      console.log(`💰 Current balance: ${currentSOL.toFixed(4)} SOL`);
+      
+      // If we already have enough SOL, skip airdrop
+      if (currentBalance >= lamports) {
+        console.log(`✅ Sufficient SOL balance (${currentSOL.toFixed(4)} SOL). Skipping airdrop.`);
+        return null;
+      }
+      
+      console.log(`💧 Requesting ${requestedSOL} SOL airdrop...`);
+      const signature = await this.connection.requestAirdrop(this.payer.publicKey, lamports);
+      await this.connection.confirmTransaction(signature);
+      
+      const newBalance = await this.connection.getBalance(this.payer.publicKey);
+      console.log(`✅ Airdrop completed: ${signature} (New balance: ${(newBalance / 1e9).toFixed(4)} SOL)`);
+      return signature;
+    } catch (error) {
+      console.log(`⚠️  Airdrop failed (${error instanceof Error ? error.message : 'Unknown error'}), continuing with existing balance...`);
+      const currentBalance = await this.connection.getBalance(this.payer.publicKey);
+      console.log(`💰 Current balance: ${(currentBalance / 1e9).toFixed(4)} SOL`);
+      return null;
+    }
   }
 }
 

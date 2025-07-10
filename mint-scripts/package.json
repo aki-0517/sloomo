@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "deploy": "ts-node deploy-interactive.ts",
-    "deploy:usdc": "ts-node -e \"import('./deploy-yield-bearing-stablecoin').then(m => { const d = new m.YieldBearingStablecoinDeployer(); d.requestAirdrop().then(() => d.deploy(m.STABLECOIN_CONFIGS.USDC_TEST)).then(console.log); })\"",
-    "deploy:usdt": "ts-node -e \"import('./deploy-yield-bearing-stablecoin').then(m => { const d = new m.YieldBearingStablecoinDeployer(); d.requestAirdrop().then(() => d.deploy(m.STABLECOIN_CONFIGS.USDT_TEST)).then(console.log); })\"",
-    "deploy:dai": "ts-node -e \"import('./deploy-yield-bearing-stablecoin').then(m => { const d = new m.YieldBearingStablecoinDeployer(); d.requestAirdrop().then(() => d.deploy(m.STABLECOIN_CONFIGS.DAI_TEST)).then(console.log); })\"",
+    "deploy:usdc": "ts-node -e \"import('./deploy-yield-bearing-stablecoin').then(m => { const d = new m.YieldBearingStablecoinDeployer(); d.requestAirdrop().then(() => d.deploy(m.STABLECOIN_CONFIGS.USDC_TEST)).then(console.log).catch(console.error); })\"",
+    "deploy:usdt": "ts-node -e \"import('./deploy-yield-bearing-stablecoin').then(m => { const d = new m.YieldBearingStablecoinDeployer(); d.requestAirdrop().then(() => d.deploy(m.STABLECOIN_CONFIGS.USDT_TEST)).then(console.log).catch(console.error); })\"",
+    "deploy:dai": "ts-node -e \"import('./deploy-yield-bearing-stablecoin').then(m => { const d = new m.YieldBearingStablecoinDeployer(); d.requestAirdrop().then(() => d.deploy(m.STABLECOIN_CONFIGS.DAI_TEST)).then(console.log).catch(console.error); })\"",
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
