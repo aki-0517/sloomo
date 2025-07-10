@@ -8,8 +8,10 @@ yarn-error.log*
 .metro-health-check*
 
 # Build artifacts
+android/
 android/app/build/
 android/build/
+ios/
 ios/build/
 ios/DerivedData/
 
