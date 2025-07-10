@@ -1,34 +1,34 @@
-# Sloomo - Smart Stablecoin Yield Optimization Platform
+# Sloomo - xStock Equity Token Portfolio Allocation Platform
 
 ![Sloomo Logo](app/assets/sloomo-logo.png)
 
-**Sloomo** is a mobile-first DeFi portfolio management application that revolutionizes stablecoin investment management on Solana. By combining intuitive visual portfolio editing features with automated yield optimization, it makes advanced DeFi strategies accessible to everyday investors.
+**Sloomo** is a mobile-first equity token portfolio management application that revolutionizes stock investment on Solana through xStock integration. By combining intuitive visual portfolio editing features with 1-tap automated allocation, it makes traditional equity investing accessible on-chain with the speed and efficiency of blockchain technology.
 
 ## 🚀 Project Overview
 
 Sloomo consists of the following main components:
 
-- **Mobile App** (`app/`): Modern portfolio management app using Expo SDK 52 and React Native 0.76
-- **Smart Contracts** (`contract/`): Solana programs built with the Anchor framework
-- **Token Scripts** (`mint-scripts/`): Scripts for minting and deploying yield-bearing stablecoins
+- **Mobile App** (`app/`): Modern equity portfolio management app using Expo SDK 52 and React Native 0.76
+- **Smart Contracts** (`contract/`): Solana programs built with the Anchor framework for portfolio management
+- **Token Scripts** (`mint-scripts/`): Scripts for deploying and managing equity token operations
 - **Documentation** (`docs/`): Project-related technical specifications
 
 ## 📱 Key Features
 
 ### 🎯 Visual Portfolio Management
-- **Interactive Pie Chart Interface**: Drag & drop interface for intuitive asset allocation
-- **Real-time APY Tracking**: Portfolio value tracking with yield visualization
-- **One-tap Rebalancing**: Simple portfolio adjustments with automatic transaction generation
-- **Progressive Feature Disclosure**: Natural guidance to advanced features
+- **Interactive Pie Chart Interface**: Drag & drop interface for intuitive equity allocation
+- **Real-time Price Tracking**: Portfolio value tracking with live stock price visualization
+- **1-Tap Allocation**: Simple portfolio adjustments with automatic transaction generation
+- **Progressive Feature Disclosure**: Natural guidance to advanced equity trading features
 
-### 📊 Intelligent Yield Optimization
-- **Automatic Yield Discovery**: Automated discovery of highest yield stablecoin opportunities
-- **Multi-protocol Support**: Real-time APY tracking across major Solana protocols like Solend and Meteora
-- **Smart Rebalancing Suggestions**: Optimization suggestions based on market conditions
-- **Historical Analysis**: Performance analysis and trend analysis
+### 📊 Intelligent Equity Allocation
+- **Automatic Stock Discovery**: Automated discovery of trending and recommended equity opportunities
+- **Multi-Market Support**: Real-time price tracking across major equity markets via xStock integration
+- **Smart Rebalancing Suggestions**: Optimization suggestions based on market conditions and performance
+- **Historical Analysis**: Performance analysis and trend analysis for equity holdings
 
 ### 🔐 Seamless Mobile Integration
-- **Solana Mobile Stack**: Native wallet integration and secure transactions
+- **Solana Mobile Stack**: Native wallet integration and secure equity token transactions
 - **Touch-first Design**: Interactions optimized for Android devices
 - **Offline Support**: Continuous user experience through local data sync
 - **Progressive Web App**: Web support for broader accessibility
@@ -51,7 +51,8 @@ Sloomo consists of the following main components:
 - **Multi-RPC Support** for reliability (Helius, QuickNode)
 
 ### Data Layer
-- **Real-time APIs** for live yield data (Helius, Meteora, Solend)
+- **xStock API Integration** for live equity data and tokenization
+- **Real-time Price APIs** for market data
 - **AsyncStorage** for offline functionality
 - **Background Sync** for automatic data updates
 
@@ -89,7 +90,7 @@ yarn install
 cd ../contract
 yarn install
 
-# Mint script dependencies
+# Token script dependencies
 cd ../mint-scripts
 yarn install
 ```
@@ -137,8 +138,8 @@ anchor deploy
 ```bash
 cd mint-scripts
 
-# Deploy yield-bearing stablecoin
-yarn ts-node deploy-yield-bearing-stablecoin.ts
+# Deploy equity token management contracts
+yarn ts-node deploy-equity-token-manager.ts
 ```
 
 ## 🧪 Testing & Quality Assurance
@@ -208,14 +209,14 @@ sloomo/
 
 ### Onboarding
 1. **Wallet Connection**: Seamless integration with Phantom and Solflare
-2. **Portfolio Import**: Automatic discovery of existing stablecoin holdings
-3. **Goal Setting**: Setting risk tolerance and yield targets
-4. **Initial Rebalancing**: Guided optimization of initial portfolio
+2. **Portfolio Import**: Automatic discovery of existing equity token holdings
+3. **Risk Assessment**: Setting risk tolerance and investment goals
+4. **Initial Allocation**: Guided optimization of initial portfolio
 
 ### Daily Usage
 1. **Quick Check**: At-a-glance view of portfolio value and daily P&L
-2. **Opportunity Alerts**: Notifications for significant yield changes
-3. **One-tap Actions**: Deposits, withdrawals, and rebalancing with minimal friction
+2. **Market Alerts**: Notifications for significant price movements
+3. **1-Tap Actions**: Buying, selling, and rebalancing with minimal friction
 4. **Performance Review**: Weekly/monthly portfolio analysis
 
 ## 🤝 Contributing
@@ -240,8 +241,8 @@ This project is released under the MIT License. Please see the [LICENSE](LICENSE
 
 ### User Engagement
 - Daily Active Users: Target 1,000+ within 3 months
-- Managed Portfolio Value: $10M+ total assets under management
-- Transaction Volume: 10,000+ rebalancing operations
+- Assets Under Management: $10M+ total equity token value
+- Transaction Volume: 10,000+ allocation operations
 - User Retention: 70%+ monthly retention rate
 
 ### Technical Performance
@@ -252,4 +253,4 @@ This project is released under the MIT License. Please see the [LICENSE](LICENSE
 
 ---
 
-**Solana Mobile Stack Compatible | Optimized for DeFi Yields | Designed for Everyone**
+**Solana Mobile Stack Compatible | Optimized for Equity Trading | Designed for Everyone**
