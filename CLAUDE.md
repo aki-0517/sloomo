@@ -13,16 +13,19 @@ All dependency management and script execution should use yarn instead of npm:
 
 ## Project Structure
 
-This is a Solana Mobile dApp built with React Native and Expo. The project has a dual structure:
+This is a Solana ecosystem project with multiple components:
 
-- **Root level**: Contains main `package.json` with React Native scripts and dependencies
-- **credit-pay/**: Contains the Expo app with modern React Native setup
+- **Root level**: Contains main `package.json` for the Solana Mobile app
+- **app/**: Contains the Expo-based React Native app with modern setup
+- **contract/**: Contains Solana smart contracts built with Anchor framework
+- **mint-scripts/**: Contains scripts for minting yield-bearing stablecoins
+- **docs/**: Project documentation
 
-The active development should focus on the `credit-pay/` directory which contains the current Expo-based implementation.
+The active development should focus on the `app/` directory for mobile app development.
 
 ## Development Commands
 
-### Root Level Commands (Legacy React Native)
+### Root Level Commands (React Native - Legacy)
 ```bash
 yarn android        # Run Android app
 yarn start         # Start React Native packager
@@ -32,9 +35,9 @@ yarn typecheck     # Run TypeScript type checking
 yarn build:android # Build Android release
 ```
 
-### Expo App Commands (credit-pay/)
+### Expo App Commands (app/)
 ```bash
-cd credit-pay
+cd app
 yarn start         # Start Expo dev server
 yarn android       # Start Android development build
 yarn ios          # Start iOS development build
@@ -43,23 +46,50 @@ yarn build        # Build using EAS Build
 yarn build:local  # Build locally using EAS
 ```
 
+### Contract Commands (contract/)
+```bash
+cd contract
+yarn install      # Install dependencies
+anchor build       # Build Solana program
+anchor test        # Run Anchor tests
+anchor deploy      # Deploy to configured cluster
+```
+
+### Mint Scripts Commands (mint-scripts/)
+```bash
+cd mint-scripts
+yarn install      # Install dependencies
+yarn ts-node deploy-yield-bearing-stablecoin.ts  # Deploy yield-bearing stablecoin
+```
+
 ## Architecture Overview
 
 ### Core Technologies
+
+#### Mobile App (app/)
 - **React Native 0.76** with **Expo SDK 52**
 - **Solana Mobile Stack** with Mobile Wallet Adapter (MWA)
 - **React Navigation 6** for navigation
 - **React Native Paper** for Material Design components
-- **React Query** for server state management
+- **TanStack React Query** for server state management
 - **TypeScript** for type safety
 - **AsyncStorage** for persistence
 
-### Key Components Structure
+#### Smart Contracts (contract/)
+- **Anchor Framework** for Solana program development
+- **Rust** for smart contract implementation
+- **Solana Web3.js** for client interactions
+
+#### Token Scripts (mint-scripts/)
+- **SPL Token 2022** for advanced token features
+- **Yield-bearing stablecoins** implementation
+- **TypeScript** for deployment scripts
+
+### Key Components Structure (app/)
 
 #### Providers & Context
 - `ConnectionProvider`: Manages Solana RPC connection based on selected cluster
-- `ClusterProvider`: Handles cluster/network selection (devnet, testnet, mainnet)
-- `QueryClientProvider`: React Query for caching and state management
+- `QueryClientProvider`: TanStack React Query for caching and state management
 
 #### Navigation
 - `AppNavigator`: Main navigation stack using React Navigation
@@ -81,41 +111,69 @@ The app uses Solana Mobile Wallet Adapter for secure wallet interactions:
 - Supports connect, disconnect, transaction signing, and message signing
 - Configured for devnet by default (`CHAIN_IDENTIFIER = "solana:devnet"`)
 
-### Component Architecture
+### Component Architecture (app/src/)
 
 Components are organized in feature-based folders:
 - `components/account/`: Account-related components
 - `components/cluster/`: Network/cluster selection
 - `components/sign-in/`: Authentication components
 - `components/top-bar/`: Navigation components
+- `components/home/`: Home screen specific components (ActionButtons, BalanceCard, LineChart)
+- `components/portfolio/`: Portfolio management components
 - `components/ui/`: Reusable UI components
+- `modals/`: Modal components
+- `types/`: TypeScript type definitions
+- `theme/`: App theming and colors
 
 ### Build Configuration
 
-#### EAS Build (credit-pay/)
+#### EAS Build (app/)
 - Uses EAS Build for cloud builds
 - Configured in `eas.json` with development, preview, and production profiles
-- Project ID: `5c0cf63c-017f-48d2-93ba-43a2aabf1410`
+- Project name: `credit-pay`
 
 #### App Configuration
 - Bundle ID: `com.solana.mobile.expo.template`
 - Supports both light and dark themes
 - Android-focused (Solana Mobile Stack is Android-only)
 
+#### Contract Build (contract/)
+- Uses Anchor framework for Solana program builds
+- Rust toolchain required
+- Configured in `Anchor.toml` for cluster deployment
+
 ## Testing
 
-Currently minimal test setup:
+### Mobile App Testing (app/)
+- Minimal test setup currently
+- Expo test configuration available
+
+### Root Level Testing
 - Jest configured for React Native
 - Testing Library for React Native available
-- Root level has proper test configuration, credit-pay/ has placeholder
+- Proper test configuration in place
+
+### Contract Testing (contract/)
+- Anchor test framework
+- Test files in `tests/` directory
 
 ## Common Development Patterns
 
+### Mobile App (app/)
 1. **Wallet Operations**: Use `useMobileWallet` hook for all wallet interactions
-2. **Network Switching**: Use `ClusterProvider` and `useCluster` for network management
+2. **Network Switching**: Use connection provider for cluster management
 3. **Styling**: Use React Native Paper theming with automatic dark/light mode support
-4. **State Management**: React Query for server state, React hooks for local state
+4. **State Management**: TanStack React Query for server state, React hooks for local state
 5. **Navigation**: Follow React Navigation patterns with typed navigation
+
+### Smart Contracts (contract/)
+1. **Program Structure**: Follow Anchor framework patterns
+2. **Account Management**: Use proper PDA derivation and account validation
+3. **Error Handling**: Implement comprehensive error types and handling
+
+### Token Operations (mint-scripts/)
+1. **SPL Token 2022**: Use advanced features for yield-bearing tokens
+2. **Deployment**: Use TypeScript scripts for reproducible deployments
 
 ## Important Notes
 
@@ -126,8 +184,20 @@ Currently minimal test setup:
 
 ## Development Workflow
 
-1. Work primarily in the `credit-pay/` directory
+### Mobile App Development
+1. Work primarily in the `app/` directory
 2. Use Expo development builds, not Expo Go
 3. Test on Android devices/emulators with MWA-compatible wallets
 4. Run `yarn typecheck` and `yarn lint` before committing
 5. Use EAS Build for production builds targeting Solana dApp Store
+
+### Smart Contract Development
+1. Work in the `contract/` directory
+2. Use `anchor build` and `anchor test` for development
+3. Deploy to devnet for testing before mainnet
+4. Ensure proper program validation and security
+
+### Token Script Development
+1. Work in the `mint-scripts/` directory
+2. Test deployments on devnet first
+3. Use proper configuration management for different environments
