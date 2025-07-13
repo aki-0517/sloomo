@@ -28,4 +28,10 @@ pub enum SloomoError {
     NoRebalanceNeeded,
     #[msg("リバランス実行中")]
     RebalanceInProgress,
+    #[msg("Jupiter API エラー")]
+    JupiterApiError,
+    #[msg("スワップ実行失敗")]
+    SwapExecutionFailed,
+    #[msg("クォート取得失敗")]
+    QuoteRetrievalFailed,
 }

@@ -11,7 +11,7 @@ pub use error::*;
 pub use state::*;
 pub use instructions::*;
 
-declare_id!("F4Cq84a2mtt4cH8eKP4bWf4K3td7gHYzjyM1HP7SirdS");
+declare_id!("EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC");
 
 #[program]
 pub mod sloomo_portfolio {
@@ -43,12 +43,24 @@ pub mod sloomo_portfolio {
         instructions::withdraw_from_equity::handler(ctx, amount, token_symbol)
     }
 
-    /// ポートフォリオのリバランス実行
-    pub fn rebalance_portfolio(
-        ctx: Context<RebalancePortfolio>,
+    /// 実際の資産移動を伴うJupiterリバランス実行
+    pub fn real_jupiter_rebalance(
+        ctx: Context<RealJupiterRebalance>,
         target_allocations: Vec<AllocationTarget>,
+        slippage_bps: Option<u16>,
     ) -> Result<()> {
-        instructions::rebalance_portfolio::handler(ctx, target_allocations)
+        instructions::real_jupiter_rebalance::handler(ctx, target_allocations, slippage_bps)
+    }
+
+    /// Jupiterクォート情報記録
+    pub fn record_jupiter_quote(
+        ctx: Context<RecordJupiterQuote>,
+        input_mint: String,
+        output_mint: String,
+        amount: u64,
+        slippage_bps: Option<u16>,
+    ) -> Result<()> {
+        instructions::real_jupiter_rebalance::record_jupiter_quote(ctx, input_mint, output_mint, amount, slippage_bps)
     }
 
     /// 利回り情報の更新

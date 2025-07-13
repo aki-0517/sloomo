@@ -153,23 +153,27 @@ impl Portfolio {
         Ok(false)
     }
 
-    /// リバランスを実行
-    pub fn execute_rebalance(
+    /// 実際の残高に基づいてポートフォリオを更新（見かけのリバランスではない）
+    pub fn update_from_real_balances(
         &mut self,
-        target_allocations: &[AllocationTarget],
-        total_value: u64,
+        actual_balances: &[(Pubkey, u64)], // (mint, actual_amount)のペア
+        timestamp: i64,
     ) -> Result<()> {
-        // リバランス実行ロジック（簡略化版）
-        for target in target_allocations {
+        // 実際の残高に基づいて配分を更新
+        for (mint, actual_amount) in actual_balances {
             if let Some(allocation) = self.allocations
                 .iter_mut()
-                .find(|a| a.mint == target.mint) {
-                
-                let target_amount = (total_value as u128 * target.target_percentage as u128 / 10000u128) as u64;
-                allocation.current_amount = target_amount;
-                allocation.target_percentage = target.target_percentage;
+                .find(|a| a.mint == *mint) {
+                allocation.current_amount = *actual_amount;
             }
         }
+
+        // 総価値を再計算
+        self.total_value = self.calculate_total_value()?;
+        self.updated_at = timestamp;
+
+        // パフォーマンススナップショットを追加
+        self.add_performance_snapshot(timestamp)?;
 
         Ok(())
     }

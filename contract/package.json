@@ -7,10 +7,20 @@
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
     "test": "anchor test",
-    "test:unit": "anchor test --skip-deploy tests/sloomo_portfolio.ts",
+    "test:unit": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-mocha -p ./tsconfig.json -t 1000000 'tests/unit/**/*.test.ts'",
+    "test:integration": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-mocha -p ./tsconfig.json -t 1000000 'tests/integration/**/*.test.ts'",
+    "test:jupiter": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-mocha -p ./tsconfig.json -t 1000000 'tests/integration/real_jupiter_integration.test.ts'",
+    "test:all": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.test.ts'",
+    "test:watch": "yarn test:all --watch",
+    "test:coverage": "nyc yarn test:all",
     "build": "anchor build",
     "deploy:localnet": "anchor deploy --provider.cluster localnet",
-    "deploy:devnet": "anchor deploy --provider.cluster devnet"
+    "deploy:devnet": "anchor deploy --provider.cluster devnet",
+    "portfolio:init": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/initialize_portfolio.ts",
+    "portfolio:check": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/check_portfolio.ts",
+    "portfolio:invest": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/invest_in_equity.ts",
+    "portfolio:rebalance": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/jupiter_rebalance.ts",
+    "portfolio:update-yields": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/update_yields.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",

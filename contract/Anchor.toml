@@ -9,11 +9,14 @@ idl-build = ["idl-parse", "no-entrypoint"]
 [programs.localnet]
 sloomo_portfolio = "F4Cq84a2mtt4cH8eKP4bWf4K3td7gHYzjyM1HP7SirdS"
 
+[programs.devnet]
+sloomo_portfolio = "EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC"
+
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
