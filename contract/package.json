@@ -1,11 +1,21 @@
 {
+  "name": "sloomo-portfolio-contract",
+  "version": "0.1.0",
+  "description": "Sloomo Portfolio Management Smart Contract",
   "license": "ISC",
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "test": "anchor test",
+    "test:unit": "anchor test --skip-deploy tests/sloomo_portfolio.ts",
+    "build": "anchor build",
+    "deploy:localnet": "anchor deploy --provider.cluster localnet",
+    "deploy:devnet": "anchor deploy --provider.cluster devnet"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.31.1"
+    "@coral-xyz/anchor": "^0.31.1",
+    "@solana/web3.js": "^1.95.7",
+    "@solana/spl-token": "^0.4.9"
   },
   "devDependencies": {
     "chai": "^4.3.4",

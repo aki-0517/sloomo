@@ -4,9 +4,10 @@ package_manager = "yarn"
 [features]
 resolution = true
 skip-lint = false
+idl-build = ["idl-parse", "no-entrypoint"]
 
 [programs.localnet]
-contract = "F4Cq84a2mtt4cH8eKP4bWf4K3td7gHYzjyM1HP7SirdS"
+sloomo_portfolio = "F4Cq84a2mtt4cH8eKP4bWf4K3td7gHYzjyM1HP7SirdS"
 
 [registry]
 url = "https://api.apr.dev"
