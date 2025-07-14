@@ -1,8 +1,9 @@
-# Setup Guide
+# Setup Guide / セットアップガイド
 
 Complete environment setup and quick start guide for Sloomo Portfolio development.
+Sloomo Portfolioの完全な環境セットアップとクイックスタートガイド。
 
-## 🚀 Quick Start (5 minutes)
+## 🚀 Quick Start (5 minutes) / クイックスタート（5分）
 
 ### 1. Environment Preparation (1 minute)
 

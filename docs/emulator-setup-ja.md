@@ -1,4 +1,4 @@
-# Solana Mobile CreditPay 開発環境セットアップ
+# Solana Mobile 開発環境セットアップ
 
 このガイドでは、MacでAndroidエミュレーターを使用してSolana Mobile CreditPayアプリを開発・テストするための完全な手順を説明します。
 
