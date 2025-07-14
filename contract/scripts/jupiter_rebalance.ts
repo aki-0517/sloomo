@@ -5,7 +5,7 @@
 
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID, NATIVE_MINT } from "@solana/spl-token";
 import { SloomoPortfolio } from "../target/types/sloomo_portfolio";
 
 async function jupiterRebalance(slippageBps?: number) {
@@ -47,19 +47,19 @@ async function jupiterRebalance(slippageBps?: number) {
       return;
     }
 
-    // USDC設定
-    const usdcMint = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
-    let usdcTokenAccount;
+    // wSOL設定
+    const wsolMint = NATIVE_MINT; // So11111111111111111111111111111111111111112
+    let wsolTokenAccount;
     
     try {
-      usdcTokenAccount = await getAssociatedTokenAddress(
-        usdcMint,
+      wsolTokenAccount = await getAssociatedTokenAddress(
+        wsolMint,
         user.publicKey
       );
-      console.log("USDC Token Account:", usdcTokenAccount.toString());
+      console.log("wSOL Token Account:", wsolTokenAccount.toString());
     } catch (error) {
-      console.log("❌ USDC トークンアカウントの取得に失敗しました");
-      console.log("Associated Token Account を作成してください");
+      console.log("❌ wSOL トークンアカウントの取得に失敗しました");
+      console.log("まず SOL をデポジットしてください: yarn portfolio:deposit [amount] SOL");
       return;
     }
 
@@ -129,21 +129,21 @@ async function jupiterRebalance(slippageBps?: number) {
     console.log("\n⚠️  重要: これは実際の資産移動を伴う操作です");
     console.log("devnet環境での実行のため、実際のスワップはクライアントサイドで別途実行が必要です");
 
-    // リバランス実行
-    console.log("\nリバランストランザクション送信中...");
+    // SOLリバランス実行
+    console.log("\nSOLリバランストランザクション送信中...");
     const tx = await program.methods
-      .realJupiterRebalance(targetAllocations, slippage)
+      .solJupiterRebalance(targetAllocations, slippage)
       .accounts({
         portfolio: portfolioPda,
         owner: user.publicKey,
-        usdcTokenAccount: usdcTokenAccount,
-        usdcMint: usdcMint,
+        wsolTokenAccount: wsolTokenAccount,
+        wsolMint: wsolMint,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
       } as any)
       .rpc();
 
-    console.log("✅ Jupiterリバランス完了!");
+    console.log("✅ SOLベースJupiterリバランス完了!");
     console.log("トランザクション:", tx);
     console.log("Explorer:", `https://explorer.solana.com/tx/${tx}?cluster=devnet`);
 
@@ -175,9 +175,9 @@ async function jupiterRebalance(slippageBps?: number) {
     }
 
     console.log("\n⚠️  重要な注意事項:");
-    console.log("このリバランスはオンチェーンでの計算とログ出力のみです");
-    console.log("実際のJupiterスワップを実行するには、クライアントサイドの");
-    console.log("Jupiter API統合が必要です");
+    console.log("このSOLリバランスはオンチェーンでの計算とログ出力のみです");
+    console.log("実際のJupiterスワップを実行するには、コントラクト内での");
+    console.log("Jupiter Rust API統合が必要です");
 
     console.log("\n=== 次のアクション候補 ===");
     console.log("📊 ポートフォリオ確認: yarn portfolio:check");
@@ -185,7 +185,7 @@ async function jupiterRebalance(slippageBps?: number) {
     console.log("📈 利回り更新: yarn portfolio:update-yields");
 
   } catch (error) {
-    console.error("❌ Jupiterリバランスエラー:");
+    console.error("❌ SOLベースJupiterリバランスエラー:");
     console.error(error);
     
     if (error.message.includes("NoRebalanceNeeded")) {

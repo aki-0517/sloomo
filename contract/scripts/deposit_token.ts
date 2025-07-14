@@ -308,9 +308,18 @@ async function depositSol(program: any, user: any, portfolioPda: PublicKey, amou
       console.log("Explorer:", `https://explorer.solana.com/tx/${tx}?cluster=devnet`);
 
     } else {
-      console.log(" 既存のwSOLアカウントを使用...");
+      console.log("💎 既存のwSOLアカウントを使用...");
       
-      // 既存のwSOLアカウントがある場合は、SOL→wSOL変換のみ
+      // 既存のwSOLアカウントがある場合は、SOLをwSOLアカウントに送金してからSync
+      
+      // SOLをwSOLアカウントに送金
+      const transferIx = SystemProgram.transfer({
+        fromPubkey: user.publicKey,
+        toPubkey: userWsolAccount,
+        lamports: depositAmountLamports,
+      });
+
+      // wSOLアカウントをSync（ラップ）
       const syncNativeIx = createSyncNativeInstruction(userWsolAccount);
 
       // SOL投資実行
@@ -330,6 +339,7 @@ async function depositSol(program: any, user: any, portfolioPda: PublicKey, amou
 
       // 複数の命令を1つのトランザクションにまとめる
       const transaction = new Transaction()
+        .add(transferIx)
         .add(syncNativeIx)
         .add(depositIx);
 
@@ -379,13 +389,17 @@ function parseArgs() {
   const amount = args[0] ? parseFloat(args[0]) : undefined;
   const tokenType = args[1]?.toUpperCase() as 'USDC' | 'SOL' | undefined;
   
-  if (amount && (isNaN(amount) || amount <= 0)) {
-    console.log("❌ 無効な投資金額です");
-    console.log("使用例:");
-    console.log("  yarn portfolio:deposit 100 USDC  # 100 USDC投資");
-    console.log("  yarn portfolio:deposit 1 SOL     # 1 SOL投資");
-    console.log("  yarn portfolio:deposit 100       # 100 USDC投資（デフォルト）");
-    process.exit(1);
+  // amountが指定されている場合の検証
+  if (args[0]) {
+    const parsedAmount = parseFloat(args[0]);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      console.log("❌ 無効な投資金額です");
+      console.log("使用例:");
+      console.log("  yarn portfolio:deposit 100 USDC  # 100 USDC投資");
+      console.log("  yarn portfolio:deposit 1 SOL     # 1 SOL投資");
+      console.log("  yarn portfolio:deposit 100       # 100 USDC投資（デフォルト）");
+      process.exit(1);
+    }
   }
 
   if (tokenType && !['USDC', 'SOL'].includes(tokenType)) {

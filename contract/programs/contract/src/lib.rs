@@ -52,5 +52,14 @@ pub mod sloomo_portfolio {
         instructions::real_jupiter_rebalance::handler(ctx, target_allocations, slippage_bps)
     }
 
+    /// SOLベースのJupiterリバランス実行
+    pub fn sol_jupiter_rebalance(
+        ctx: Context<SolJupiterRebalance>,
+        target_allocations: Vec<AllocationTarget>,
+        slippage_bps: Option<u16>,
+    ) -> Result<()> {
+        instructions::sol_jupiter_rebalance::handler(ctx, target_allocations, slippage_bps)
+    }
+
 
 }

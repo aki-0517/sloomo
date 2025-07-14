@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-/// Jupiter スワップのヘルパー関数
-pub struct JupiterSwapHelper;
+/// Jupiter SOL スワップのヘルパー関数
+pub struct JupiterSolSwapHelper;
 
-impl JupiterSwapHelper {
+impl JupiterSolSwapHelper {
     /// リバランスに必要なスワップ操作を計算
     pub fn calculate_swap_operations(
         current_allocations: &[crate::state::AllocationData],
@@ -25,7 +25,7 @@ impl JupiterSwapHelper {
                     swap_operations.push(SwapOperation {
                         operation_type: SwapOperationType::Sell,
                         from_mint: target.mint,
-                        to_mint: CommonMints::get_usdc_pubkey(),
+                        to_mint: CommonMints::get_wsol_pubkey(),
                         amount: sell_amount,
                     });
                 } else if current.current_amount < target_amount {
@@ -33,7 +33,7 @@ impl JupiterSwapHelper {
                     let buy_amount = target_amount - current.current_amount;
                     swap_operations.push(SwapOperation {
                         operation_type: SwapOperationType::Buy,
-                        from_mint: CommonMints::get_usdc_pubkey(),
+                        from_mint: CommonMints::get_wsol_pubkey(),
                         to_mint: target.mint,
                         amount: buy_amount,
                     });
@@ -43,7 +43,7 @@ impl JupiterSwapHelper {
                 let target_amount = (total_value as u128 * target.target_percentage as u128 / 10000u128) as u64;
                 swap_operations.push(SwapOperation {
                     operation_type: SwapOperationType::Buy,
-                    from_mint: CommonMints::get_usdc_pubkey(),
+                    from_mint: CommonMints::get_wsol_pubkey(),
                     to_mint: target.mint,
                     amount: target_amount,
                 });
@@ -103,5 +103,10 @@ impl CommonMints {
     /// USDCのPubkeyを取得
     pub fn get_usdc_pubkey() -> Pubkey {
         Self::USDC.parse().unwrap()
+    }
+    
+    /// wSOLのPubkeyを取得 (Native Mint)
+    pub fn get_wsol_pubkey() -> Pubkey {
+        "So11111111111111111111111111111111111111112".parse().unwrap()
     }
 }

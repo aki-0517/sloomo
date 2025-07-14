@@ -16,6 +16,7 @@
     "portfolio:deposit": "cd contract && yarn portfolio:deposit",
     "portfolio:add-allocation": "cd contract && yarn portfolio:add-allocation",
     "portfolio:check-usdc": "cd contract && yarn portfolio:check-usdc",
+    "portfolio:check-sol": "cd contract && yarn portfolio:check-sol", 
     "portfolio:check": "cd contract && yarn portfolio:check",
     "portfolio:rebalance": "cd contract && yarn portfolio:rebalance"
   },
