@@ -1,0 +1,1433 @@
+{
+  "address": "EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC",
+  "metadata": {
+    "name": "sloomo_portfolio",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Sloomo Portfolio Management - xStock equity token portfolio with auto-rebalancing"
+  },
+  "instructions": [
+    {
+      "name": "add_or_update_allocation",
+      "docs": [
+        "アロケーション追加/編集"
+      ],
+      "discriminator": [
+        43,
+        144,
+        202,
+        244,
+        51,
+        25,
+        97,
+        191
+      ],
+      "accounts": [
+        {
+          "name": "portfolio",
+          "docs": [
+            "編集対象ポートフォリオ"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  114,
+                  116,
+                  102,
+                  111,
+                  108,
+                  105,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "docs": [
+            "トランザクション実行者（ポートフォリオ所有者）"
+          ],
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "portfolio"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "mint",
+          "type": "pubkey"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "target_percentage",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "deposit_usdc",
+      "docs": [
+        "USDCをdeposit"
+      ],
+      "discriminator": [
+        184,
+        148,
+        250,
+        169,
+        224,
+        213,
+        34,
+        126
+      ],
+      "accounts": [
+        {
+          "name": "portfolio",
+          "docs": [
+            "deposit先ポートフォリオ"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  114,
+                  116,
+                  102,
+                  111,
+                  108,
+                  105,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_usdc_account",
+          "docs": [
+            "ユーザーのUSDCアカウント（送金元）"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "portfolio_usdc_vault",
+          "docs": [
+            "ポートフォリオのUSDCボルト（送金先）"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "portfolio"
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "docs": [
+            "USDCミント"
+          ]
+        },
+        {
+          "name": "owner",
+          "docs": [
+            "トランザクション実行者（ポートフォリオ所有者）"
+          ],
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "portfolio"
+          ]
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "SPLトークンプログラム"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "docs": [
+            "関連付けトークンプログラム"
+          ],
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "システムプログラム"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize_portfolio",
+      "docs": [
+        "ポートフォリオを初期化"
+      ],
+      "discriminator": [
+        122,
+        177,
+        206,
+        169,
+        129,
+        85,
+        26,
+        192
+      ],
+      "accounts": [
+        {
+          "name": "portfolio",
+          "docs": [
+            "初期化するポートフォリオアカウント"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  114,
+                  116,
+                  102,
+                  111,
+                  108,
+                  105,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "docs": [
+            "ポートフォリオの所有者（料金支払い者）"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "システムプログラム"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "params",
+          "type": {
+            "defined": {
+              "name": "InitPortfolioParams"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "real_jupiter_rebalance",
+      "docs": [
+        "実際の資産移動を伴うJupiterリバランス実行"
+      ],
+      "discriminator": [
+        58,
+        33,
+        226,
+        190,
+        194,
+        68,
+        78,
+        145
+      ],
+      "accounts": [
+        {
+          "name": "portfolio",
+          "docs": [
+            "リバランス対象ポートフォリオ"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  114,
+                  116,
+                  102,
+                  111,
+                  108,
+                  105,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "docs": [
+            "トランザクション実行者（ポートフォリオ所有者）"
+          ],
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "portfolio"
+          ]
+        },
+        {
+          "name": "usdc_token_account",
+          "docs": [
+            "USDC（ベースカレンシー）のトークンアカウント"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "usdc_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "docs": [
+            "USDCミント"
+          ]
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "SPLトークンプログラム"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "システムプログラム"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "target_allocations",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "AllocationTarget"
+              }
+            }
+          }
+        },
+        {
+          "name": "slippage_bps",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    },
+    {
+      "name": "sol_jupiter_rebalance",
+      "docs": [
+        "SOLベースのJupiterリバランス実行"
+      ],
+      "discriminator": [
+        153,
+        95,
+        160,
+        251,
+        169,
+        126,
+        190,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "portfolio",
+          "docs": [
+            "リバランス対象ポートフォリオ"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  114,
+                  116,
+                  102,
+                  111,
+                  108,
+                  105,
+                  111
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "owner",
+          "docs": [
+            "トランザクション実行者（ポートフォリオ所有者）"
+          ],
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "portfolio"
+          ]
+        },
+        {
+          "name": "wsol_token_account",
+          "docs": [
+            "wrapped SOL（wSOL）のトークンアカウント"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "owner"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "wsol_mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "wsol_mint",
+          "docs": [
+            "wSOLミント（Native Mint）"
+          ]
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "SPLトークンプログラム"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "システムプログラム"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "target_allocations",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "AllocationTarget"
+              }
+            }
+          }
+        },
+        {
+          "name": "slippage_bps",
+          "type": {
+            "option": "u16"
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Portfolio",
+      "discriminator": [
+        94,
+        158,
+        71,
+        245,
+        122,
+        102,
+        110,
+        225
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AllocationAdded",
+      "discriminator": [
+        179,
+        133,
+        119,
+        68,
+        208,
+        141,
+        188,
+        39
+      ]
+    },
+    {
+      "name": "AllocationUpdated",
+      "discriminator": [
+        155,
+        176,
+        176,
+        161,
+        165,
+        244,
+        52,
+        145
+      ]
+    },
+    {
+      "name": "PortfolioInitialized",
+      "discriminator": [
+        127,
+        204,
+        100,
+        91,
+        101,
+        166,
+        140,
+        55
+      ]
+    },
+    {
+      "name": "SolPortfolioRebalanced",
+      "discriminator": [
+        73,
+        190,
+        164,
+        96,
+        100,
+        222,
+        37,
+        82
+      ]
+    },
+    {
+      "name": "StablecoinPortfolioRebalanced",
+      "discriminator": [
+        53,
+        36,
+        148,
+        36,
+        56,
+        188,
+        166,
+        209
+      ]
+    },
+    {
+      "name": "UsdcDeposited",
+      "discriminator": [
+        180,
+        188,
+        183,
+        1,
+        208,
+        145,
+        174,
+        124
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidAllocationPercentage",
+      "msg": "無効な配分比率"
+    },
+    {
+      "code": 6001,
+      "name": "InsufficientBalance",
+      "msg": "リバランスに必要な残高が不足"
+    },
+    {
+      "code": 6002,
+      "name": "PortfolioNotFound",
+      "msg": "ポートフォリオが見つかりません"
+    },
+    {
+      "code": 6003,
+      "name": "Unauthorized",
+      "msg": "認証されていないアクセス"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidTokenMint",
+      "msg": "無効なトークンミント"
+    },
+    {
+      "code": 6005,
+      "name": "RebalanceTooFrequent",
+      "msg": "リバランス実行が頻繁すぎます"
+    },
+    {
+      "code": 6006,
+      "name": "AllocationOverflow",
+      "msg": "総配分が100%を超えています"
+    },
+    {
+      "code": 6007,
+      "name": "YieldUpdateTooFrequent",
+      "msg": "利回り更新が頻繁すぎます"
+    },
+    {
+      "code": 6008,
+      "name": "MathOverflow",
+      "msg": "数値オーバーフロー"
+    },
+    {
+      "code": 6009,
+      "name": "InvalidApy",
+      "msg": "無効なAPY値"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidAmount",
+      "msg": "無効な金額"
+    },
+    {
+      "code": 6011,
+      "name": "NoRebalanceNeeded",
+      "msg": "リバランス不要"
+    },
+    {
+      "code": 6012,
+      "name": "RebalanceInProgress",
+      "msg": "リバランス実行中"
+    },
+    {
+      "code": 6013,
+      "name": "JupiterApiError",
+      "msg": "Jupiter API エラー"
+    },
+    {
+      "code": 6014,
+      "name": "SwapExecutionFailed",
+      "msg": "スワップ実行失敗"
+    },
+    {
+      "code": 6015,
+      "name": "QuoteRetrievalFailed",
+      "msg": "クォート取得失敗"
+    }
+  ],
+  "types": [
+    {
+      "name": "AllocationAdded",
+      "docs": [
+        "アロケーション追加イベント"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "portfolio",
+            "docs": [
+              "ポートフォリオアカウント"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "docs": [
+              "トークンミント"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "symbol",
+            "docs": [
+              "トークンシンボル"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "target_percentage",
+            "docs": [
+              "目標配分比率"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "timestamp",
+            "docs": [
+              "追加実行時刻"
+            ],
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AllocationData",
+      "docs": [
+        "配分データ構造"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "docs": [
+              "トークンミントアドレス"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "symbol",
+            "docs": [
+              "トークンシンボル (例: AAPL, GOOGL)"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "current_amount",
+            "docs": [
+              "現在の投資額"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "target_percentage",
+            "docs": [
+              "目標配分比率 (basis points: 10000 = 100%)"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "apy",
+            "docs": [
+              "年間利回り (basis points: 100 = 1%)"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "last_yield_update",
+            "docs": [
+              "最後の利回り更新時刻"
+            ],
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AllocationParams",
+      "docs": [
+        "配分パラメータ"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "docs": [
+              "トークンミントアドレス"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "symbol",
+            "docs": [
+              "トークンシンボル"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "target_percentage",
+            "docs": [
+              "目標配分比率 (basis points)"
+            ],
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AllocationTarget",
+      "docs": [
+        "リバランス目標配分"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "docs": [
+              "トークンミントアドレス"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "target_percentage",
+            "docs": [
+              "目標配分比率 (basis points)"
+            ],
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AllocationUpdated",
+      "docs": [
+        "アロケーション更新イベント"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "portfolio",
+            "docs": [
+              "ポートフォリオアカウント"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "docs": [
+              "トークンミント"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "symbol",
+            "docs": [
+              "トークンシンボル"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "target_percentage",
+            "docs": [
+              "新しい目標配分比率"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "timestamp",
+            "docs": [
+              "更新実行時刻"
+            ],
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitPortfolioParams",
+      "docs": [
+        "ポートフォリオ初期化パラメータ"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "initial_allocations",
+            "docs": [
+              "初期配分設定"
+            ],
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "AllocationParams"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PerformanceSnapshot",
+      "docs": [
+        "パフォーマンススナップショット"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "timestamp",
+            "docs": [
+              "記録時刻"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "total_value",
+            "docs": [
+              "その時点での総価値"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "growth_rate",
+            "docs": [
+              "成長率 (basis points: 100 = 1%)"
+            ],
+            "type": "i16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Portfolio",
+      "docs": [
+        "ポートフォリオアカウント",
+        "ユーザーの投資ポートフォリオを管理する"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "ポートフォリオの所有者"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDAbump"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "total_value",
+            "docs": [
+              "ポートフォリオの総価値"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_rebalance",
+            "docs": [
+              "最後にリバランスを実行した時刻"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "allocations",
+            "docs": [
+              "配分データ"
+            ],
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "AllocationData"
+                }
+              }
+            }
+          },
+          {
+            "name": "performance_history",
+            "docs": [
+              "パフォーマンス履歴"
+            ],
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "PerformanceSnapshot"
+                }
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "docs": [
+              "作成日時"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "docs": [
+              "更新日時"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "is_rebalancing",
+            "docs": [
+              "リバランス実行中フラグ（リエントランシー防止）"
+            ],
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PortfolioInitialized",
+      "docs": [
+        "ポートフォリオ初期化イベント"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "ポートフォリオ所有者"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "portfolio",
+            "docs": [
+              "ポートフォリオアカウント"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "allocations_count",
+            "docs": [
+              "初期配分数"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SolPortfolioRebalanced",
+      "docs": [
+        "SOL ポートフォリオリバランスイベント"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "ポートフォリオ所有者"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "wsol_amount",
+            "docs": [
+              "リバランス時のwSOL金額"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "target_allocations_count",
+            "docs": [
+              "配分されたトークン種類数"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "docs": [
+              "リバランス実行時刻"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "slippage_bps",
+            "docs": [
+              "使用されたスリッページ"
+            ],
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StablecoinPortfolioRebalanced",
+      "docs": [
+        "Stablecoin ポートフォリオリバランスイベント"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "ポートフォリオ所有者"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_amount",
+            "docs": [
+              "リバランス時のUSDC金額"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "target_allocations_count",
+            "docs": [
+              "配分された stablecoin 種類数"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "timestamp",
+            "docs": [
+              "リバランス実行時刻"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "slippage_bps",
+            "docs": [
+              "使用されたスリッページ"
+            ],
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UsdcDeposited",
+      "docs": [
+        "USDC deposit実行イベント"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "portfolio",
+            "docs": [
+              "ポートフォリオアカウント"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "docs": [
+              "ポートフォリオ所有者"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "docs": [
+              "デポジット金額"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "docs": [
+              "デポジット実行時刻"
+            ],
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ]
+}

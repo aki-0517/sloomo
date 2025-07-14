@@ -5,6 +5,7 @@ export const theme = {
     error: '#FF5A5F',
     background: '#F7F9FC',
     surface: '#FFFFFF',
+    surfaceVariant: '#F3F4F6',
     text: '#1A1A1A',
     textSecondary: '#6B7280',
     border: '#E5E7EB',

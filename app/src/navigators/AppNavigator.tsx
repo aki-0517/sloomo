@@ -37,6 +37,8 @@ type RootStackParamList = {
   Settings: undefined;
   EditPortfolio: undefined;
   AssetDetail: { symbol: string };
+  Deposit: undefined;
+  Rebalance: undefined;
   // 🔥 Your screens go here
 };
 
@@ -67,6 +69,16 @@ const AppStack = () => {
         name="AssetDetail" 
         component={Screens.AssetDetailScreen}
         options={{ headerShown: false }}
+      />
+      <Stack.Screen 
+        name="Deposit" 
+        component={Screens.DepositScreen}
+        options={{ title: 'Deposit Funds' }}
+      />
+      <Stack.Screen 
+        name="Rebalance" 
+        component={Screens.RebalanceScreen}
+        options={{ title: 'Rebalance Portfolio' }}
       />
       {/** 🔥 Your screens go here */}
     </Stack.Navigator>

@@ -148,6 +148,48 @@ PORT=8082 npx expo start --dev-client --port 8082
 - **DevTools**: ターミナルで `j` を押す（Chrome/Edge必要）
 - **サーバー停止**: `Ctrl+C`
 
+### アプリのリロード方法
+
+開発中にアプリをリロードする方法は複数あります：
+
+#### 1. Metro Bundlerからのリロード（推奨）
+```bash
+# 開発サーバーが起動している状態で
+r  # ターミナルで 'r' キーを押す
+```
+
+#### 2. エミュレーター内でのリロード
+- **Android**: `Ctrl + M` (macOS: `Cmd + M`) でDev Menuを開く
+- **Reload**を選択
+
+#### 3. 物理的なシェイク
+- エミュレーターで「Extended controls」→「Virtual sensors」→「Accelerometer」でシェイクを再現
+
+#### 4. adbコマンドでのリロード
+```bash
+# Dev Menuを開く
+adb shell input keyevent 82
+
+# アプリを再起動
+adb shell am force-stop com.solana.mobile.expo.template
+adb shell am start -n com.solana.mobile.expo.template/.MainActivity
+```
+
+#### 5. Fast Refresh
+コードを編集して保存すると、Fast Refreshが自動的に変更を反映します（通常はリロード不要）。
+
+#### 6. 完全リセットが必要な場合
+```bash
+# Metro Bundlerを停止
+Ctrl + C
+
+# キャッシュをクリア
+npx expo start --dev-client --clear
+
+# または
+npx expo start --dev-client --reset-cache
+```
+
 ## Solanaウォレットのセットアップ
 
 ### ウォレット接続エラーの解決

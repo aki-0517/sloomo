@@ -1,10 +1,21 @@
 import { getRandomValues as expoCryptoGetRandomValues } from "expo-crypto";
 import { Buffer } from "buffer";
+import "core-js/actual/structured-clone";
 
 console.log('Loading polyfills...');
 
 global.Buffer = Buffer;
 console.log('Buffer polyfill loaded');
+
+// structuredClone polyfill
+if (typeof global.structuredClone === 'undefined') {
+  try {
+    global.structuredClone = require('@ungap/structured-clone');
+  } catch {
+    global.structuredClone = require('core-js/actual/structured-clone');
+  }
+}
+console.log('structuredClone polyfill loaded');
 
 // getRandomValues polyfill
 class Crypto {
