@@ -12,12 +12,13 @@ export interface TempPortfolioData {
   totalValue: number;
   isTemporary: boolean;
   lastUpdated: Date;
+  isSaved?: boolean;
 }
 
 interface PortfolioContextType {
   tempPortfolio: TempPortfolioData | null;
   setTempPortfolio: (portfolio: TempPortfolioData | null) => void;
-  updateTempAllocation: (allocations: TempAllocation[]) => void;
+  updateTempAllocation: (allocations: TempAllocation[], isSaved?: boolean) => void;
   clearTempPortfolio: () => void;
 }
 
@@ -42,12 +43,13 @@ export const PortfolioProvider: React.FC<PortfolioProviderProps> = ({ children }
     setTempPortfolioState(portfolio);
   };
 
-  const updateTempAllocation = (allocations: TempAllocation[]) => {
+  const updateTempAllocation = (allocations: TempAllocation[], isSaved = false) => {
     const newPortfolio: TempPortfolioData = {
       allocations,
       totalValue: 0, // Mock value for temporary portfolio
       isTemporary: true,
       lastUpdated: new Date(),
+      isSaved,
     };
     setTempPortfolioState(newPortfolio);
   };

@@ -11,6 +11,7 @@ interface PortfolioDisplayProps {
     totalValue: number;
     isTemporary: boolean;
     lastUpdated: Date;
+    isSaved?: boolean;
   } | null;
 }
 
@@ -18,10 +19,22 @@ export const PortfolioDisplay: React.FC<PortfolioDisplayProps> = ({
   portfolioData,
   tempPortfolio
 }) => {
-  // Determine what data to display
+  // Determine what data to display - prioritize temporary portfolio if available
   const getDisplayData = () => {
+    // First check for temporary portfolio data (session changes)
+    if (tempPortfolio && tempPortfolio.allocations.length > 0) {
+      // Temporary portfolio data (unsaved changes from edit screen)
+      const allocations = tempPortfolio.allocations.map((allocation: TempAllocation) => ({
+        symbol: allocation.symbol,
+        currentPct: allocation.currentPct || 0,
+        targetPct: allocation.targetPct,
+      }));
+      return { allocations, isTemporary: true };
+    }
+    
+    // Then check for real portfolio data from contract
     if (portfolioData && portfolioData.allocations) {
-      // Real portfolio data
+      // Real portfolio data from contract
       const allocations = portfolioData.allocations.map((allocation: any) => {
         const currentPercentage = portfolioData.totalValue.toNumber() > 0
           ? (allocation.currentAmount.toNumber() / portfolioData.totalValue.toNumber()) * 100
@@ -36,17 +49,7 @@ export const PortfolioDisplay: React.FC<PortfolioDisplayProps> = ({
       return { allocations, isTemporary: false };
     }
     
-    if (tempPortfolio && tempPortfolio.allocations.length > 0) {
-      // Temporary portfolio data
-      const allocations = tempPortfolio.allocations.map((allocation: TempAllocation) => ({
-        symbol: allocation.symbol,
-        currentPct: allocation.currentPct || 0,
-        targetPct: allocation.targetPct,
-      }));
-      return { allocations, isTemporary: true };
-    }
-    
-    // Default data
+    // Default data when no portfolio exists
     return {
       allocations: [
         { symbol: 'GOOGLx', currentPct: 0, targetPct: 60 },
@@ -68,11 +71,19 @@ export const PortfolioDisplay: React.FC<PortfolioDisplayProps> = ({
     }
     
     if (tempPortfolio) {
-      return {
-        title: '📝 Draft Portfolio',
-        subtitle: 'You have unsaved allocation changes. Initialize to save permanently.',
-        titleColor: theme.colors.warning,
-      };
+      if (tempPortfolio.isSaved) {
+        return {
+          title: '✅ Updated Portfolio',
+          subtitle: 'Your portfolio changes have been saved successfully.',
+          titleColor: theme.colors.success,
+        };
+      } else {
+        return {
+          title: '📝 Draft Portfolio',
+          subtitle: 'You have unsaved allocation changes. Initialize to save permanently.',
+          titleColor: theme.colors.warning,
+        };
+      }
     }
     
     return {

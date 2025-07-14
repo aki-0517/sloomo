@@ -15,6 +15,7 @@ import { mockAssets } from '../utils/mock';
 export const EditPortfolioScreen: React.FC = () => {
   const [draftTargets, setDraftTargets] = useState<Allocation[]>([]);
   const [originalAllocations, setOriginalAllocations] = useState<any[]>([]);
+  const [initialDraftTargets, setInitialDraftTargets] = useState<Allocation[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -39,6 +40,7 @@ export const EditPortfolioScreen: React.FC = () => {
           targetPct: allocation.targetPct,
         }));
         setDraftTargets(allocations);
+        setInitialDraftTargets(allocations);
         setIsLoading(false);
         return;
       }
@@ -63,6 +65,7 @@ export const EditPortfolioScreen: React.FC = () => {
           });
           
           setDraftTargets(allocations);
+          setInitialDraftTargets(allocations);
         } else {
           // No portfolio data, start with default allocations
           const defaultAllocations = [
@@ -70,6 +73,7 @@ export const EditPortfolioScreen: React.FC = () => {
             { symbol: 'COINx', currentPct: 0, targetPct: 40 },
           ];
           setDraftTargets(defaultAllocations);
+          setInitialDraftTargets(defaultAllocations);
         }
       } else {
         // No contract, start with default allocations
@@ -78,6 +82,7 @@ export const EditPortfolioScreen: React.FC = () => {
           { symbol: 'COINx', currentPct: 0, targetPct: 40 },
         ];
         setDraftTargets(defaultAllocations);
+        setInitialDraftTargets(defaultAllocations);
       }
     } catch (error) {
       console.error('Error loading portfolio data:', error);
@@ -87,6 +92,7 @@ export const EditPortfolioScreen: React.FC = () => {
         { symbol: 'COINx', currentPct: 0, targetPct: 40 },
       ];
       setDraftTargets(defaultAllocations);
+      setInitialDraftTargets(defaultAllocations);
     } finally {
       setIsLoading(false);
     }
@@ -104,7 +110,7 @@ export const EditPortfolioScreen: React.FC = () => {
     saveTempAllocations(updatedTargets);
   };
 
-  const saveTempAllocations = (allocations: Allocation[]) => {
+  const saveTempAllocations = (allocations: Allocation[], isSaved = false) => {
     const tempAllocations: TempAllocation[] = allocations.map(allocation => ({
       symbol: allocation.symbol,
       mint: getMintForSymbol(allocation.symbol),
@@ -112,7 +118,7 @@ export const EditPortfolioScreen: React.FC = () => {
       currentPct: allocation.currentPct,
     }));
     
-    updateTempAllocation(tempAllocations);
+    updateTempAllocation(tempAllocations, isSaved);
   };
 
   const getMintForSymbol = (symbol: string): string => {
@@ -129,6 +135,7 @@ export const EditPortfolioScreen: React.FC = () => {
   const handleRemoveAsset = (symbol: string) => {
     const updatedTargets = draftTargets.filter(allocation => allocation.symbol !== symbol);
     setDraftTargets(updatedTargets);
+    // Save to temporary storage immediately
     saveTempAllocations(updatedTargets);
   };
 
@@ -170,8 +177,9 @@ export const EditPortfolioScreen: React.FC = () => {
         }
       }
 
-      // Clear temporary portfolio since we've saved to contract
-      clearTempPortfolio();
+      // Keep temporary portfolio with saved data to show immediately on Home screen
+      // The data will be cleared when the user makes new changes or app restarts
+      saveTempAllocations(draftTargets, true);
       
       Alert.alert(
         'Success', 
@@ -192,7 +200,40 @@ export const EditPortfolioScreen: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigation.goBack();
+    // Check if there are unsaved changes
+    const hasChanges = JSON.stringify(draftTargets) !== JSON.stringify(initialDraftTargets);
+    
+    if (hasChanges) {
+      Alert.alert(
+        'Unsaved Changes',
+        'You have unsaved changes. What would you like to do?',
+        [
+          {
+            text: 'Discard Changes',
+            style: 'destructive',
+            onPress: () => {
+              // Revert to initial state and clear temp portfolio
+              setDraftTargets(initialDraftTargets);
+              saveTempAllocations(initialDraftTargets);
+              navigation.goBack();
+            }
+          },
+          {
+            text: 'Keep Changes',
+            onPress: () => {
+              // Keep current changes in temp portfolio
+              navigation.goBack();
+            }
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel'
+          }
+        ]
+      );
+    } else {
+      navigation.goBack();
+    }
   };
 
   const handleAddAsset = () => {
@@ -207,6 +248,7 @@ export const EditPortfolioScreen: React.FC = () => {
     };
     const updatedTargets = [...draftTargets, newAllocation];
     setDraftTargets(updatedTargets);
+    // Save to temporary storage immediately
     saveTempAllocations(updatedTargets);
     setShowAddModal(false);
   };
