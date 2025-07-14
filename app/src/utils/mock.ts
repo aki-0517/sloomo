@@ -2,48 +2,38 @@ import { Stablecoin, Allocation, Transaction, PortfolioData } from '../types/sta
 
 export const mockAssets: Stablecoin[] = [
   {
-    symbol: 'USDC-SOLEND',
-    name: 'Solend USDC',
+    symbol: 'GOOGLx',
+    name: 'Alphabet xStock',
     apy: 4.25,
     tvl: 120_000_000,
-    logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png'
+    logo: 'https://wsrv.nl/?w=32&h=32&url=https%3A%2F%2Fxstocks-metadata.backed.fi%2Flogos%2Ftokens%2FGOOGLx.png&dpr=2&quality=80'
   },
   {
-    symbol: 'USDT-MET',
-    name: 'Meteora USDT',
+    symbol: 'COINx',
+    name: 'Coinbase xStock',
     apy: 3.90,
     tvl: 80_000_000,
-    logo: 'https://cryptologos.cc/logos/tether-usdt-logo.png'
+    logo: 'https://wsrv.nl/?w=32&h=32&url=https%3A%2F%2Fxstocks-metadata.backed.fi%2Flogos%2Ftokens%2FCOINx.png&dpr=2&quality=80'
   },
   {
-    symbol: 'USDC-MANGO',
-    name: 'Mango USDC',
+    symbol: 'AAPLx',
+    name: 'Apple xStock',
     apy: 5.12,
     tvl: 45_000_000,
-    logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png'
+    logo: 'https://wsrv.nl/?w=32&h=32&url=https%3A%2F%2Fxstocks-metadata.backed.fi%2Flogos%2Ftokens%2FAAPLx.png&dpr=2&quality=80'
   },
   {
-    symbol: 'USDT-DRIFT',
-    name: 'Drift USDT',
+    symbol: 'AMZNx',
+    name: 'Amazon xStock',
     apy: 3.75,
     tvl: 32_000_000,
-    logo: 'https://cryptologos.cc/logos/tether-usdt-logo.png'
-  },
-  {
-    symbol: 'USDC-KAMINO',
-    name: 'Kamino USDC',
-    apy: 4.80,
-    tvl: 65_000_000,
-    logo: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png'
+    logo: 'https://wsrv.nl/?w=32&h=32&url=https%3A%2F%2Fxstocks-metadata.backed.fi%2Flogos%2Ftokens%2FAMZNx.png&dpr=2&quality=80'
   }
 ];
 
 export const mockAllocations: Allocation[] = [
-  { symbol: 'USDC-SOLEND', currentPct: 40, targetPct: 40 },
-  { symbol: 'USDT-MET', currentPct: 25, targetPct: 25 },
-  { symbol: 'USDC-MANGO', currentPct: 20, targetPct: 20 },
-  { symbol: 'USDT-DRIFT', currentPct: 10, targetPct: 10 },
-  { symbol: 'USDC-KAMINO', currentPct: 5, targetPct: 5 }
+  { symbol: 'GOOGLx', currentPct: 60, targetPct: 60 },
+  { symbol: 'COINx', currentPct: 40, targetPct: 40 }
 ];
 
 export const mockTransactions: Transaction[] = [

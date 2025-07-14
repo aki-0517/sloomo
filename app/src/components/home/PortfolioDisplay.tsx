@@ -49,8 +49,8 @@ export const PortfolioDisplay: React.FC<PortfolioDisplayProps> = ({
     // Default data
     return {
       allocations: [
-        { symbol: 'SOL', currentPct: 0, targetPct: 60 },
-        { symbol: 'USDC', currentPct: 0, targetPct: 40 },
+        { symbol: 'GOOGLx', currentPct: 0, targetPct: 60 },
+        { symbol: 'COINx', currentPct: 0, targetPct: 40 },
       ],
       isTemporary: false
     };

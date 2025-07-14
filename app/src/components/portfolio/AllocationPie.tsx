@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions, Text } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, Image } from 'react-native';
 import { theme } from '../../theme/colors';
 import { Allocation } from '../../types/stablecoin';
+import { mockAssets } from '../../utils/mock';
 
 const { width } = Dimensions.get('window');
 
@@ -27,19 +28,28 @@ export const AllocationPie: React.FC<AllocationPieProps> = ({ data, animate = tr
     <View style={styles.container}>
       <View style={styles.pieContainer}>
         <View style={styles.legendContainer}>
-          {data.map((allocation, index) => (
-            <View key={allocation.symbol} style={styles.legendItem}>
-              <View 
-                style={[
-                  styles.legendColor, 
-                  { backgroundColor: colors[index % colors.length] }
-                ]} 
-              />
-              <Text style={styles.legendText}>
-                {allocation.symbol}: {allocation.targetPct}%
-              </Text>
-            </View>
-          ))}
+          {data.map((allocation, index) => {
+            const asset = mockAssets.find(a => a.symbol === allocation.symbol);
+            return (
+              <View key={allocation.symbol} style={styles.legendItem}>
+                <View 
+                  style={[
+                    styles.legendColor, 
+                    { backgroundColor: colors[index % colors.length] }
+                  ]} 
+                />
+                {asset?.logo && (
+                  <Image 
+                    source={{ uri: asset.logo }} 
+                    style={styles.legendLogo}
+                  />
+                )}
+                <Text style={styles.legendText}>
+                  {allocation.symbol}: {allocation.targetPct}%
+                </Text>
+              </View>
+            );
+          })}
         </View>
         
         <View style={styles.pieChart}>
@@ -102,6 +112,11 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
+    marginRight: theme.spacing.sm,
+  },
+  legendLogo: {
+    width: 20,
+    height: 20,
     marginRight: theme.spacing.sm,
   },
   legendText: {

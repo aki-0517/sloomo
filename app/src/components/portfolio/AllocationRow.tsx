@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { theme } from '../../theme/colors';
+import { mockAssets } from '../../utils/mock';
 
 interface AllocationRowProps {
   symbol: string;
@@ -26,10 +27,20 @@ export const AllocationRow: React.FC<AllocationRowProps> = ({
     }
   };
 
+  const asset = mockAssets.find(a => a.symbol === symbol);
+
   return (
     <View style={styles.container}>
       <View style={styles.symbolContainer}>
-        <Text style={styles.symbol}>{symbol}</Text>
+        <View style={styles.symbolHeader}>
+          {asset?.logo && (
+            <Image 
+              source={{ uri: asset.logo }} 
+              style={styles.logo}
+            />
+          )}
+          <Text style={styles.symbol}>{symbol}</Text>
+        </View>
         <Text style={styles.apy}>{apy.toFixed(2)}% APY</Text>
       </View>
       
@@ -74,11 +85,20 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: theme.spacing.sm
   },
+  symbolHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs
+  },
+  logo: {
+    width: 20,
+    height: 20,
+    marginRight: theme.spacing.sm,
+  },
   symbol: {
     fontSize: 16,
     fontWeight: '600',
     color: theme.colors.text,
-    marginBottom: theme.spacing.xs
   },
   apy: {
     fontSize: 12,

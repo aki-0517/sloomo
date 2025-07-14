@@ -66,16 +66,16 @@ export const EditPortfolioScreen: React.FC = () => {
         } else {
           // No portfolio data, start with default allocations
           const defaultAllocations = [
-            { symbol: 'SOL', currentPct: 0, targetPct: 60 },
-            { symbol: 'USDC', currentPct: 0, targetPct: 40 },
+            { symbol: 'GOOGLx', currentPct: 0, targetPct: 60 },
+            { symbol: 'COINx', currentPct: 0, targetPct: 40 },
           ];
           setDraftTargets(defaultAllocations);
         }
       } else {
         // No contract, start with default allocations
         const defaultAllocations = [
-          { symbol: 'SOL', currentPct: 0, targetPct: 60 },
-          { symbol: 'USDC', currentPct: 0, targetPct: 40 },
+          { symbol: 'GOOGLx', currentPct: 0, targetPct: 60 },
+          { symbol: 'COINx', currentPct: 0, targetPct: 40 },
         ];
         setDraftTargets(defaultAllocations);
       }
@@ -83,8 +83,8 @@ export const EditPortfolioScreen: React.FC = () => {
       console.error('Error loading portfolio data:', error);
       // On error, start with default allocations
       const defaultAllocations = [
-        { symbol: 'SOL', currentPct: 0, targetPct: 60 },
-        { symbol: 'USDC', currentPct: 0, targetPct: 40 },
+        { symbol: 'GOOGLx', currentPct: 0, targetPct: 60 },
+        { symbol: 'COINx', currentPct: 0, targetPct: 40 },
       ];
       setDraftTargets(defaultAllocations);
     } finally {
@@ -118,8 +118,10 @@ export const EditPortfolioScreen: React.FC = () => {
   const getMintForSymbol = (symbol: string): string => {
     // Map symbols to their mint addresses
     const mintMap: { [key: string]: string } = {
-      'SOL': 'So11111111111111111111111111111111111111112',
-      'USDC': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+      'GOOGLx': 'So11111111111111111111111111111111111111112',
+      'COINx': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
+      'AAPLx': 'So11111111111111111111111111111111111111112',
+      'AMZNx': '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
     };
     return mintMap[symbol] || '';
   };

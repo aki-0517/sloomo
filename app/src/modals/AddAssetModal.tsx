@@ -35,7 +35,15 @@ export const AddAssetModal: React.FC<AddAssetModalProps> = ({
     <View style={styles.assetCard}>
       <View style={styles.assetInfo}>
         <View style={styles.assetHeader}>
-          <Text style={styles.assetSymbol}>{item.symbol}</Text>
+          <View style={styles.assetSymbolContainer}>
+            {item.logo && (
+              <Image 
+                source={{ uri: item.logo }} 
+                style={styles.assetLogo}
+              />
+            )}
+            <Text style={styles.assetSymbol}>{item.symbol}</Text>
+          </View>
           <Text style={styles.assetApy}>{item.apy.toFixed(2)}% APY</Text>
         </View>
         <Text style={styles.assetName}>{item.name}</Text>
@@ -144,6 +152,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.xs
+  },
+  assetSymbolContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  assetLogo: {
+    width: 24,
+    height: 24,
+    marginRight: theme.spacing.sm,
   },
   assetSymbol: {
     fontSize: 16,
