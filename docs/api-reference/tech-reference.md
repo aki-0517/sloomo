@@ -1,6 +1,6 @@
-# Solana React Native dApp Guide
+# Solana React Native Stablecoin Portfolio dApp Guide
 
-This guide covers how to interact with the Solana network in a React Native environment, including making RPC requests, building and sending transactions, integrating Mobile Wallet Adapter, and using Anchor programs.
+This guide covers how to interact with the Solana network in a React Native environment for yield-bearing stablecoin portfolio management, including making RPC requests, building and sending transactions, integrating Mobile Wallet Adapter, using Anchor programs, and Jupiter API integration.
 
 ---
 
@@ -36,6 +36,11 @@ This guide covers how to interact with the Solana network in a React Native envi
     - [Create an Anchor Wallet](#create-an-anchor-wallet)
     - [Importing an Anchor Program](#importing-an-anchor-program)
     - [Signing Transactions with Anchor](#signing-transactions-with-anchor)
+  - [Jupiter API Integration](#jupiter-api-integration)
+    - [Add Jupiter Dependencies](#add-jupiter-dependencies)
+    - [Jupiter Client Setup](#jupiter-client-setup)
+    - [Stablecoin Swap Example](#stablecoin-swap-example)
+    - [Portfolio Rebalancing with Jupiter](#portfolio-rebalancing-with-jupiter)
 
 ---
 
@@ -372,21 +377,160 @@ const counterProgram = new Program<BasicCounterProgram>(
 
 ### Signing Transactions with Anchor
 
-Use generated instructions and the `Program.rpc()` helper:
+Use generated instructions for stablecoin portfolio management:
 
 ```js
-// Manual:
-const incrementIx = await counterProgram.methods.increment(new anchor.BN(1))
-  .accounts({ counter: counterPDA })
+// Initialize Portfolio:
+const initializeIx = await portfolioProgram.methods
+  .initializePortfolio({
+    initialAllocations: [
+      { mint: usdcMint, symbol: 'USDC-SOLEND', targetPercentage: 5000 },
+      { mint: usdtMint, symbol: 'USDT-MET', targetPercentage: 5000 },
+    ]
+  })
+  .accounts({
+    portfolio: portfolioPDA,
+    owner: anchorWallet.publicKey,
+    systemProgram: SystemProgram.programId,
+  })
+  .instruction();
+
+// Rebalance Portfolio with Jupiter:
+const rebalanceIx = await portfolioProgram.methods
+  .realJupiterRebalance(
+    [
+      { mint: usdcMint, targetPercentage: 6000 },
+      { mint: usdtMint, targetPercentage: 4000 },
+    ],
+    50 // slippage bps
+  )
+  .accounts({
+    portfolio: portfolioPDA,
+    owner: anchorWallet.publicKey,
+    usdcTokenAccount: userUsdcAccount,
+    usdcMint,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    systemProgram: SystemProgram.programId,
+  })
   .instruction();
 
 // Build & sign:
 const signed = await anchorWallet.signTransaction(
-  new Transaction({ ...latestBlockhash, feePayer: anchorWallet.publicKey }).add(incrementIx)
+  new Transaction({ ...latestBlockhash, feePayer: anchorWallet.publicKey }).add(rebalanceIx)
 );
+```
 
-// Quick rpc:
-const sig = await counterProgram.methods.increment(new anchor.BN(1))
-  .accounts({ counter: counterPDA })
-  .rpc();
+---
+
+## Jupiter API Integration
+
+Jupiter aggregates liquidity for token swaps across Solana DeFi protocols.
+
+### Add Jupiter Dependencies
+
+```bash
+# Yarn
+yarn add @jup-ag/core @jup-ag/react-hook
+
+# npm
+npm install @jup-ag/core @jup-ag/react-hook
+```
+
+### Jupiter Client Setup
+
+```js
+import { Jupiter, RouteInfo } from '@jup-ag/core';
+import { Connection, PublicKey } from '@solana/web3.js';
+
+const connection = new Connection('https://api.devnet.solana.com');
+const jupiter = await Jupiter.load({
+  connection,
+  cluster: 'devnet',
+  user: userPublicKey,
+});
+```
+
+### Stablecoin Swap Example
+
+```js
+// USDC to USDT swap
+const routes = await jupiter.computeRoutes({
+  inputMint: new PublicKey('EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'), // USDC
+  outputMint: new PublicKey('Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'), // USDT
+  amount: 1000000, // 1 USDC (6 decimals)
+  slippageBps: 50, // 0.5%
+});
+
+if (routes.routesInfos.length > 0) {
+  const { execute } = await jupiter.exchange({
+    route: routes.routesInfos[0],
+  });
+  
+  const swapResult = await execute();
+  console.log('Swap signature:', swapResult.txid);
+}
+```
+
+### Portfolio Rebalancing with Jupiter
+
+```js
+async function rebalanceStablecoinPortfolio(targetAllocations, totalUsdcBalance) {
+  const swapInstructions = [];
+  
+  for (const allocation of targetAllocations) {
+    const targetAmount = Math.floor(
+      totalUsdcBalance * allocation.targetPercentage / 10000
+    );
+    
+    if (targetAmount > 0) {
+      const routes = await jupiter.computeRoutes({
+        inputMint: usdcMint,
+        outputMint: allocation.mint,
+        amount: targetAmount,
+        slippageBps: 50,
+      });
+      
+      if (routes.routesInfos.length > 0) {
+        const { setupTransaction, swapTransaction, cleanupTransaction } = 
+          await jupiter.exchange({
+            route: routes.routesInfos[0],
+          });
+        
+        if (setupTransaction) swapInstructions.push(setupTransaction);
+        swapInstructions.push(swapTransaction);
+        if (cleanupTransaction) swapInstructions.push(cleanupTransaction);
+      }
+    }
+  }
+  
+  return swapInstructions;
+}
+
+// Usage with MWA
+const portfolioRebalance = await transact(async (wallet) => {
+  // 1. Get portfolio contract instruction
+  const portfolioInstruction = await getPortfolioRebalanceInstruction(targetAllocations);
+  
+  // 2. Get Jupiter swap instructions
+  const swapInstructions = await rebalanceStablecoinPortfolio(
+    targetAllocations,
+    usdcBalance
+  );
+  
+  // 3. Combine and send
+  const allInstructions = [portfolioInstruction, ...swapInstructions];
+  const transaction = new VersionedTransaction(
+    new TransactionMessage({
+      payerKey: userPublicKey,
+      recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
+      instructions: allInstructions,
+    }).compileToV0Message()
+  );
+  
+  const [signed] = await wallet.signAndSendTransactions({
+    transactions: [transaction],
+  });
+  
+  return signed;
+});
 ```

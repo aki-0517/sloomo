@@ -21,14 +21,13 @@ Anchor/Rust を使用したSolana プログラム開発のための完全ガイ�
 ## プロジェクト概要
 
 ### 目標
-xStock equity tokenを活用したポートフォリオ管理プラットフォームのSolanaスマートコントラクト実装
+yield-bearing stablecoinを活用したポートフォリオ管理プラットフォームのSolanaスマートコントラクト実装
 
 ### 主要機能
 - ユーザーポートフォリオ管理
-- equity token配分調整
-- 自動リバランス機能
-- 利回り計算とAPY追跡
-- トランザクション履歴管理
+- stablecoin配分調整
+- Jupiter統合によるリバランス機能
+- クライアントサイドでのAPY追跡
 
 ### 技術スタック
 - **Anchor Framework**: 0.31.1
@@ -125,16 +124,16 @@ pub mod sloomo_portfolio {
         // 実装
     }
 
-    pub fn add_allocation(ctx: Context<AddAllocation>, allocation: AllocationParams) -> Result<()> {
-        // 実装
+    pub fn deposit_usdc(ctx: Context<DepositUsdc>, amount: u64) -> Result<()> {
+        // USDCをdeposit
     }
 
-    pub fn rebalance_portfolio(ctx: Context<RebalancePortfolio>, target_allocations: Vec<AllocationTarget>) -> Result<()> {
-        // 実装
+    pub fn add_or_update_allocation(ctx: Context<AddOrUpdateAllocation>, mint: Pubkey, symbol: String, target_percentage: u16) -> Result<()> {
+        // 株式トークン選択・%設定してアロケーション作成/編集
     }
 
-    pub fn update_yields(ctx: Context<UpdateYields>) -> Result<()> {
-        // 実装
+    pub fn real_jupiter_rebalance(ctx: Context<RealJupiterRebalance>, target_allocations: Vec<AllocationTarget>, slippage_bps: Option<u16>) -> Result<()> {
+        // USDC残高をベースに各stablecoinへの配分指示を出力
     }
 }
 ```
@@ -160,7 +159,7 @@ pub struct AllocationData {
     pub symbol: String,
     pub current_amount: u64,
     pub target_percentage: u16, // basis points (10000 = 100%)
-    pub apy: u16, // basis points
+    pub apy: u16, // basis points (クライアントサイドで管理)
     pub last_yield_update: i64,
 }
 
@@ -169,18 +168,6 @@ pub struct PerformanceSnapshot {
     pub timestamp: i64,
     pub total_value: u64,
     pub growth_rate: i16, // basis points
-}
-
-#[account]
-pub struct YieldBearingToken {
-    pub mint: Pubkey,
-    pub symbol: String,
-    pub name: String,
-    pub current_apy: u16, // basis points
-    pub tvl: u64,
-    pub logo_uri: String,
-    pub last_updated: i64,
-    pub is_active: bool,
 }
 ```
 
@@ -306,11 +293,11 @@ pub struct PortfolioInitialized {
 }
 ```
 
-### 2. 自動リバランス機能
+### 2. Stablecoinリバランス機能
 
 ```rust
 #[derive(Accounts)]
-pub struct RebalancePortfolio<'info> {
+pub struct RealJupiterRebalance<'info> {
     #[account(
         mut,
         seeds = [b"portfolio", owner.key().as_ref()],
@@ -322,10 +309,19 @@ pub struct RebalancePortfolio<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
     
-    /// CHECK: CPI呼び出しに使用
-    pub token_program: Interface<'info, TokenInterface>,
+    /// USDC（ベースカレンシー）のトークンアカウント
+    #[account(
+        mut,
+        associated_token::mint = usdc_mint,
+        associated_token::authority = owner,
+    )]
+    pub usdc_token_account: Account<'info, TokenAccount>,
+
+    /// USDCミント
+    pub usdc_mint: Account<'info, Mint>,
     
-    // remaining_accountsを使用して動的にアカウントを追加
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
@@ -334,168 +330,96 @@ pub struct AllocationTarget {
     pub target_percentage: u16,
 }
 
-pub fn rebalance_portfolio(
-    ctx: Context<RebalancePortfolio>,
+pub fn real_jupiter_rebalance(
+    ctx: Context<RealJupiterRebalance>,
     target_allocations: Vec<AllocationTarget>,
+    slippage_bps: Option<u16>,
 ) -> Result<()> {
     let portfolio = &mut ctx.accounts.portfolio;
-    let current_time = Clock::get()?.unix_timestamp;
+    let clock = Clock::get()?;
+
+    // 共通バリデーション
+    validate_rebalance_frequency(portfolio, &clock)?;
+    validate_reentrancy(portfolio)?;
     
-    // リバランス頻度制限（1日1回）
-    require!(
-        current_time - portfolio.last_rebalance >= 86400,
-        SloomoError::RebalanceTooFrequent
-    );
-    
-    // 目標配分の妥当性チェック
+    // リバランス開始フラグを設定
+    portfolio.is_rebalancing = true;
+
+    // バリデーション: 目標配分の妥当性チェック
     let total_target: u16 = target_allocations.iter()
         .map(|t| t.target_percentage)
         .sum();
-    require!(total_target <= 10000, SloomoError::AllocationOverflow);
-    
-    // 現在の総価値を計算
-    let total_portfolio_value = calculate_total_portfolio_value(&portfolio)?;
-    
-    // 各アセットのリバランス実行
-    for target in target_allocations.iter() {
-        let current_allocation = portfolio.allocations
-            .iter_mut()
-            .find(|a| a.mint == target.mint)
-            .ok_or(SloomoError::InvalidTokenMint)?;
+    validate_allocation_percentage(total_target)?;
+
+    // USDC残高をベースとした総ポートフォリオ価値
+    let usdc_balance = ctx.accounts.usdc_token_account.amount;
+    require!(usdc_balance > 0, SloomoError::InsufficientBalance);
+
+    msg!("リバランス開始: USDC残高 {} をベースに目標配分に応じて各 stablecoin に配分", usdc_balance);
+
+    // 各目標配分に対してJupiter swap指示を出力
+    for target in &target_allocations {
+        let target_amount = (usdc_balance as u128 * target.target_percentage as u128 / 10000u128) as u64;
         
-        let target_value = total_portfolio_value
-            .checked_mul(target.target_percentage as u64)
-            .ok_or(SloomoError::MathOverflow)?
-            .checked_div(10000)
-            .ok_or(SloomoError::MathOverflow)?;
-        
-        let current_value = current_allocation.current_amount;
-        
-        if target_value > current_value {
-            // 買い増し
-            let buy_amount = target_value - current_value;
-            execute_buy_transaction(&ctx, &target.mint, buy_amount)?;
-        } else if target_value < current_value {
-            // 売却
-            let sell_amount = current_value - target_value;
-            execute_sell_transaction(&ctx, &target.mint, sell_amount)?;
+        if target_amount > 0 {
+            msg!(
+                "Jupiter swap 指示: USDC {} -> target_mint {} (目標金額: {}, 配分: {}%)",
+                usdc_balance,
+                target.mint,
+                target_amount,
+                target.target_percentage as f64 / 100.0
+            );
         }
-        
-        current_allocation.current_amount = target_value;
-        current_allocation.target_percentage = target.target_percentage;
     }
-    
-    portfolio.last_rebalance = current_time;
-    portfolio.updated_at = current_time;
-    
-    emit!(PortfolioRebalanced {
+
+    // ポートフォリオの配分データを更新
+    update_portfolio_allocations(
+        portfolio,
+        &target_allocations,
+        usdc_balance,
+    )?;
+
+    // 状態更新
+    portfolio.last_rebalance = clock.unix_timestamp;
+    portfolio.updated_at = clock.unix_timestamp;
+    portfolio.total_value = usdc_balance;
+    portfolio.is_rebalancing = false;
+
+    // イベント発行
+    emit!(StablecoinPortfolioRebalanced {
         owner: portfolio.owner,
-        total_value: total_portfolio_value,
-        timestamp: current_time,
+        usdc_amount: usdc_balance,
+        target_allocations_count: target_allocations.len() as u8,
+        timestamp: clock.unix_timestamp,
+        slippage_bps: slippage_bps.unwrap_or(50),
     });
-    
-    Ok(())
-}
 
-// ヘルパー関数
-fn calculate_total_portfolio_value(portfolio: &Portfolio) -> Result<u64> {
-    portfolio.allocations
-        .iter()
-        .map(|a| a.current_amount)
-        .fold(Some(0u64), |acc, val| acc?.checked_add(val))
-        .ok_or(SloomoError::MathOverflow.into())
-}
+    msg!(
+        "ポートフォリオリバランス完了: USDC {} を {} 種類の stablecoin に配分",
+        usdc_balance,
+        target_allocations.len()
+    );
 
-fn execute_buy_transaction(
-    ctx: &Context<RebalancePortfolio>,
-    mint: &Pubkey,
-    amount: u64,
-) -> Result<()> {
-    // SPL Token転送の実装
-    // remaining_accountsから適切なトークンアカウントを取得
-    Ok(())
-}
-
-fn execute_sell_transaction(
-    ctx: &Context<RebalancePortfolio>,
-    mint: &Pubkey,
-    amount: u64,
-) -> Result<()> {
-    // SPL Token転送の実装
     Ok(())
 }
 
 #[event]
-pub struct PortfolioRebalanced {
+pub struct StablecoinPortfolioRebalanced {
     pub owner: Pubkey,
-    pub total_value: u64,
+    pub usdc_amount: u64,
+    pub target_allocations_count: u8,
     pub timestamp: i64,
+    pub slippage_bps: u16,
 }
 ```
 
-### 3. 利回り更新機能
+### 削除された機能
 
-```rust
-#[derive(Accounts)]
-pub struct UpdateYields<'info> {
-    #[account(
-        mut,
-        seeds = [b"yield_token", mint.key().as_ref()],
-        bump
-    )]
-    pub yield_token: Account<'info, YieldBearingToken>,
-    
-    pub mint: InterfaceAccount<'info, Mint>,
-    
-    #[account(mut)]
-    pub authority: Signer<'info>,
-    
-    /// CHECK: 価格フィード用のオラクルアカウント
-    pub price_oracle: UncheckedAccount<'info>,
-}
+以下の機能はクライアントサイドで管理されるため、コントラクトから削除されました：
 
-pub fn update_yields(ctx: Context<UpdateYields>, new_apy: u16) -> Result<()> {
-    let yield_token = &mut ctx.accounts.yield_token;
-    let current_time = Clock::get()?.unix_timestamp;
-    
-    // 更新頻度制限（1時間に1回）
-    require!(
-        current_time - yield_token.last_updated >= 3600,
-        SloomoError::YieldUpdateTooFrequent
-    );
-    
-    // APY妥当性チェック（最大50%）
-    require!(new_apy <= 5000, SloomoError::InvalidApy);
-    
-    // オラクルからの価格データ検証
-    validate_oracle_data(&ctx.accounts.price_oracle)?;
-    
-    yield_token.current_apy = new_apy;
-    yield_token.last_updated = current_time;
-    
-    emit!(YieldUpdated {
-        mint: yield_token.mint,
-        symbol: yield_token.symbol.clone(),
-        new_apy,
-        timestamp: current_time,
-    });
-    
-    Ok(())
-}
-
-fn validate_oracle_data(_oracle: &UncheckedAccount) -> Result<()> {
-    // オラクルデータの検証ロジック
-    // 実装省略
-    Ok(())
-}
-
-#[event]
-pub struct YieldUpdated {
-    pub mint: Pubkey,
-    pub symbol: String,
-    pub new_apy: u16,
-    pub timestamp: i64,
-}
+- **利回り更新機能**: APY計算と追跡はクライアントサイドで実行
+- **個別token投資/引出機能**: stablecoinポートフォリオではJupiterスワップベースのリバランスのみ使用
+- **equity token管理**: yield-bearing stablecoinに特化
 
 // 定数定義
 const MAX_ALLOCATIONS: usize = 10;

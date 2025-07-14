@@ -11,7 +11,13 @@
     "build:android": "cd android && ./gradlew assembleRelease",
     "build:android-debug": "cd android && ./gradlew assembleDebug",
     "clean:android": "cd android && ./gradlew clean",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "portfolio:init": "cd contract && yarn portfolio:init",
+    "portfolio:deposit": "cd contract && yarn portfolio:deposit",
+    "portfolio:add-allocation": "cd contract && yarn portfolio:add-allocation",
+    "portfolio:check-usdc": "cd contract && yarn portfolio:check-usdc",
+    "portfolio:check": "cd contract && yarn portfolio:check",
+    "portfolio:rebalance": "cd contract && yarn portfolio:rebalance"
   },
   "dependencies": {
     "@react-navigation/native": "^6.1.9",

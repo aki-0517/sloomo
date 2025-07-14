@@ -24,32 +24,46 @@ Solana Mobile Stack (MWA) を使ったReact Native アプリとAnchor スマー�
 ```
                                                             
    React Native        Mobile Wallet         Solana Network 
-   + Expo SDK             Adapter             + Anchor      
+   + Expo SDK             Adapter             + Jupiter API  
                                                             
                                                          
         ↓                      ↓                      ↓    
      UI層                   認証層                  ロジック層   
      - Paper                - MWA                  - Rust  
      - Query                - Auth                 - IDL   
+     - Jupiter              - USDC Rebalance      - Stablecoin   
                                                            
 ```
 
-### トランザクション フロー
+### Stablecoinポートフォリオ管理フロー
 
 ```typescript
-// 1. ユーザーアクション
-Button.onPress() 
+// 初期リバランス
+// 1. USDCをdeposit
+anchorProgram.methods.depositUsdc()
   ↓
-// 2. React Query Mutation
-useMutation() 
+// 2. 株式トークン選択・%設定してアロケーション作成
+anchorProgram.methods.addOrUpdateAllocation()
   ↓
-// 3. Mobile Wallet Adapter
-wallet.signAndSendTransaction() 
+// 3. リバランス実行
+anchorProgram.methods.realJupiterRebalance()
   ↓
-// 4. Anchor プログラム実行
-anchorProgram.methods.portfolioRebalance()
+// 4. Jupiter API経由でUSDC→株式トークンをswap
+jupiterSwapInstructions()
   ↓
-// 5. データ更新とUI反映 
+// 5. 設定アロケーション比率で保有割合を調整
+
+// 適宜リバランス
+// 1. UIで株式トークン追加またはアロケーション編集
+anchorProgram.methods.addOrUpdateAllocation()
+  ↓
+// 2. リバランス実行
+anchorProgram.methods.realJupiterRebalance()
+  ↓
+// 3. Jupiter API経由で必要なswapを実行
+jupiterSwapInstructions()
+  ↓
+// 4. データ更新とUI反映 
 queryClient.invalidateQueries()
 ```
 
@@ -101,6 +115,45 @@ anchor build
 cp target/idl/sloomo_portfolio.json ../app/src/anchor/
 ```
 
+### 4. Jupiter API統合
+
+```typescript
+// app/src/utils/jupiterClient.ts
+import { Jupiter, RouteInfo } from '@jup-ag/core';
+import { Connection, PublicKey } from '@solana/web3.js';
+
+export class JupiterClient {
+  private jupiter: Jupiter;
+
+  constructor(connection: Connection) {
+    this.jupiter = new Jupiter({ connection });
+  }
+
+  async getSwapQuote(
+    inputMint: PublicKey,
+    outputMint: PublicKey,
+    amount: number,
+    slippageBps: number = 50
+  ): Promise<RouteInfo | null> {
+    const routes = await this.jupiter.computeRoutes({
+      inputMint,
+      outputMint,
+      amount,
+      slippageBps,
+    });
+
+    return routes.routesInfos[0] || null;
+  }
+
+  async executeSwap(route: RouteInfo, userPublicKey: PublicKey) {
+    return await this.jupiter.exchange({
+      route,
+      userPublicKey,
+    });
+  }
+}
+```
+
 ---
 
 ## 環境設定
@@ -117,18 +170,29 @@ export type SloomoPortfolioProgram = Program<SloomoPortfolio>;
 // Anchor アカウント型定義
 export interface PortfolioAccount {
   owner: PublicKey;
-  equityTokens: EquityToken[];
+  bump: number;
   totalValue: BN;
   lastRebalance: BN;
-  status: { active: {} } | { paused: {} };
+  allocations: AllocationData[];
+  performanceHistory: PerformanceSnapshot[];
+  createdAt: BN;
+  updatedAt: BN;
+  isRebalancing: boolean;
 }
 
-export interface EquityToken {
+export interface AllocationData {
   mint: PublicKey;
-  amount: BN;
-  targetAllocation: number; // basis points (10000 = 100%)
-  currentPrice: BN;
-  lastUpdate: BN;
+  symbol: string;
+  currentAmount: BN;
+  targetPercentage: number; // basis points (10000 = 100%)
+  apy: number; // basis points (クライアントサイドで管理)
+  lastYieldUpdate: BN;
+}
+
+export interface PerformanceSnapshot {
+  timestamp: BN;
+  totalValue: BN;
+  growthRate: number; // basis points
 }
 ```
 
@@ -197,25 +261,29 @@ export function getEquityTokenAccountPda(
 
 ## Mobile Wallet Adapter の設定
 
-### 1. トランザクション実行フック
+### 1. Stablecoinリバランス実行フック
 
 ```typescript
-// app/src/hooks/usePortfolioActions.tsx
+// app/src/hooks/useStablecoinRebalance.tsx
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMobileWallet } from "../utils/useMobileWallet";
 import { useAnchorProgram } from "./useAnchorProgram";
-import { TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { useConnection } from "../utils/ConnectionProvider";
+import { TransactionMessage, VersionedTransaction, SystemProgram } from "@solana/web3.js";
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { JupiterClient } from "../utils/jupiterClient";
 
-export function useInitializePortfolio() {
+export function useStablecoinRebalance() {
   const program = useAnchorProgram();
   const wallet = useMobileWallet();
   const { connection } = useConnection();
   const queryClient = useQueryClient();
+  const jupiterClient = new JupiterClient(connection);
 
   return useMutation({
     mutationFn: async (params: {
-      equityTokenMints: PublicKey[];
-      targetAllocations: number[];
+      targetAllocations: Array<{mint: PublicKey, targetPercentage: number}>;
+      slippageBps?: number;
     }) => {
       if (!program || !wallet.selectedAccount) {
         throw new Error("Program or wallet not available");
@@ -223,18 +291,35 @@ export function useInitializePortfolio() {
 
       const [portfolioPda] = getPortfolioPda(wallet.selectedAccount.publicKey);
       
-      // Anchorインストラクション作成
-      const instruction = await program.methods
-        .initializePortfolio({
-          equityTokenMints: params.equityTokenMints,
-          targetAllocations: params.targetAllocations,
-        })
+      // USDCトークンアカウント
+      const usdcMint = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // devnet USDC
+      const usdcTokenAccount = await getAssociatedTokenAddress(
+        usdcMint,
+        wallet.selectedAccount.publicKey
+      );
+      
+      // Anchorインストラクション作成 (リバランス指示)
+      const rebalanceInstruction = await program.methods
+        .realJupiterRebalance(
+          params.targetAllocations,
+          params.slippageBps || 50
+        )
         .accounts({
           portfolio: portfolioPda,
           owner: wallet.selectedAccount.publicKey,
+          usdcTokenAccount,
+          usdcMint,
+          tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
         .instruction();
+
+      // Jupiter スワップ命令を取得
+      const jupiterInstructions = await this.getJupiterSwapInstructions(
+        params.targetAllocations,
+        usdcMint,
+        wallet.selectedAccount.publicKey
+      );
 
       // トランザクション作成
       const { blockhash, lastValidBlockHeight } = 
@@ -243,7 +328,7 @@ export function useInitializePortfolio() {
       const message = new TransactionMessage({
         payerKey: wallet.selectedAccount.publicKey,
         recentBlockhash: blockhash,
-        instructions: [instruction],
+        instructions: [rebalanceInstruction, ...jupiterInstructions],
       }).compileToLegacyMessage();
 
       const transaction = new VersionedTransaction(message);
@@ -254,8 +339,43 @@ export function useInitializePortfolio() {
     onSuccess: () => {
       // キャッシュ更新
       queryClient.invalidateQueries({ queryKey: ["portfolio"] });
+      queryClient.invalidateQueries({ queryKey: ["token-balances"] });
     },
   });
+
+  async function getJupiterSwapInstructions(
+    targetAllocations: Array<{mint: PublicKey, targetPercentage: number}>,
+    usdcMint: PublicKey,
+    userPublicKey: PublicKey
+  ) {
+    const instructions = [];
+    
+    // USDC残高を取得
+    const usdcBalance = await connection.getTokenAccountBalance(
+      await getAssociatedTokenAddress(usdcMint, userPublicKey)
+    );
+    const totalUsdc = usdcBalance.value.uiAmount || 0;
+
+    for (const allocation of targetAllocations) {
+      const targetAmount = Math.floor(totalUsdc * allocation.targetPercentage / 10000);
+      
+      if (targetAmount > 0) {
+        const route = await jupiterClient.getSwapQuote(
+          usdcMint,
+          allocation.mint,
+          targetAmount * 1e6, // USDC has 6 decimals
+          50 // 0.5% slippage
+        );
+
+        if (route) {
+          const swapResult = await jupiterClient.executeSwap(route, userPublicKey);
+          instructions.push(...swapResult.instructions);
+        }
+      }
+    }
+
+    return instructions;
+  }
 }
 ```
 
@@ -288,25 +408,45 @@ export function usePortfolioAccount({ owner }: { owner: PublicKey }) {
   });
 }
 
-export function useEquityTokens({ portfolio }: { portfolio: PublicKey }) {
-  const program = useAnchorProgram();
+export function useStablecoinBalances({ owner }: { owner: PublicKey }) {
   const { connection } = useConnection();
 
   return useQuery({
-    queryKey: ["equity-tokens", { endpoint: connection.rpcEndpoint, portfolio: portfolio.toString() }],
+    queryKey: ["stablecoin-balances", { endpoint: connection.rpcEndpoint, owner: owner.toString() }],
     queryFn: async () => {
-      if (!program) return [];
+      if (!owner) return [];
 
-      return await program.account.equityToken.all([
-        {
-          memcmp: {
-            offset: 8, // discriminatorをスキップ
-            bytes: portfolio.toBase58(),
-          },
-        },
-      ]);
+      // yield-bearing stablecoin ミントアドレス一覧
+      const stablecoinMints = [
+        new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"), // USDC
+        new PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"), // USDT
+        // 他のyield-bearing stablecoin
+      ];
+
+      const balances = [];
+      for (const mint of stablecoinMints) {
+        try {
+          const tokenAccount = await getAssociatedTokenAddress(mint, owner);
+          const balance = await connection.getTokenAccountBalance(tokenAccount);
+          
+          balances.push({
+            mint,
+            balance: balance.value.uiAmount || 0,
+            decimals: balance.value.decimals,
+          });
+        } catch (error) {
+          // アカウントが存在しない場合は0とする
+          balances.push({
+            mint,
+            balance: 0,
+            decimals: 6,
+          });
+        }
+      }
+
+      return balances;
     },
-    enabled: !!program && !!portfolio,
+    enabled: !!owner,
   });
 }
 ```

@@ -39,75 +39,6 @@ impl Portfolio {
         8 + // updated_at
         1; // is_rebalancing
 
-    /// 投資を追加
-    pub fn add_investment(
-        &mut self,
-        symbol: String,
-        amount: u64,
-        timestamp: i64,
-    ) -> Result<()> {
-        // 既存の投資を検索
-        if let Some(allocation) = self.allocations
-            .iter_mut()
-            .find(|a| a.symbol == symbol) {
-            
-            allocation.current_amount = allocation.current_amount
-                .checked_add(amount)
-                .ok_or(SloomoError::MathOverflow)?;
-        } else {
-            return Err(SloomoError::InvalidTokenMint.into());
-        }
-
-        self.total_value = self.total_value
-            .checked_add(amount)
-            .ok_or(SloomoError::MathOverflow)?;
-
-        self.updated_at = timestamp;
-
-        // パフォーマンススナップショットを追加
-        self.add_performance_snapshot(timestamp)?;
-
-        Ok(())
-    }
-
-    /// 投資を削除
-    pub fn remove_investment(
-        &mut self,
-        symbol: &str,
-        amount: u64,
-        timestamp: i64,
-    ) -> Result<()> {
-        if let Some(allocation) = self.allocations
-            .iter_mut()
-            .find(|a| a.symbol == symbol) {
-            
-            allocation.current_amount = allocation.current_amount
-                .checked_sub(amount)
-                .ok_or(SloomoError::InsufficientBalance)?;
-        } else {
-            return Err(SloomoError::InvalidTokenMint.into());
-        }
-
-        self.total_value = self.total_value
-            .checked_sub(amount)
-            .ok_or(SloomoError::InsufficientBalance)?;
-
-        self.updated_at = timestamp;
-
-        // パフォーマンススナップショットを追加
-        self.add_performance_snapshot(timestamp)?;
-
-        Ok(())
-    }
-
-    /// 指定シンボルの投資額を取得
-    pub fn get_investment_amount(&self, symbol: &str) -> u64 {
-        self.allocations
-            .iter()
-            .find(|a| a.symbol == symbol)
-            .map(|a| a.current_amount)
-            .unwrap_or(0)
-    }
 
     /// ポートフォリオの総価値を計算
     pub fn calculate_total_value(&self) -> Result<u64> {
@@ -179,7 +110,7 @@ impl Portfolio {
     }
 
     /// パフォーマンススナップショットを追加
-    fn add_performance_snapshot(&mut self, timestamp: i64) -> Result<()> {
+    pub fn add_performance_snapshot(&mut self, timestamp: i64) -> Result<()> {
         let growth_rate = if self.performance_history.is_empty() {
             0
         } else {

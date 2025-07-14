@@ -25,22 +25,22 @@ pub mod sloomo_portfolio {
         instructions::initialize_portfolio::handler(ctx, params)
     }
 
-    /// xStock equity tokenに投資
-    pub fn invest_in_equity(
-        ctx: Context<InvestInEquity>,
+    /// USDCをdeposit
+    pub fn deposit_usdc(
+        ctx: Context<DepositUsdc>,
         amount: u64,
-        token_symbol: String,
     ) -> Result<()> {
-        instructions::invest_in_equity::handler(ctx, amount, token_symbol)
+        instructions::deposit_usdc::handler(ctx, amount)
     }
 
-    /// equity tokenからの引出
-    pub fn withdraw_from_equity(
-        ctx: Context<WithdrawFromEquity>,
-        amount: u64,
-        token_symbol: String,
+    /// アロケーション追加/編集
+    pub fn add_or_update_allocation(
+        ctx: Context<AddOrUpdateAllocation>,
+        mint: Pubkey,
+        symbol: String,
+        target_percentage: u16,
     ) -> Result<()> {
-        instructions::withdraw_from_equity::handler(ctx, amount, token_symbol)
+        instructions::add_or_update_allocation::handler(ctx, mint, symbol, target_percentage)
     }
 
     /// 実際の資産移動を伴うJupiterリバランス実行
@@ -52,22 +52,5 @@ pub mod sloomo_portfolio {
         instructions::real_jupiter_rebalance::handler(ctx, target_allocations, slippage_bps)
     }
 
-    /// Jupiterクォート情報記録
-    pub fn record_jupiter_quote(
-        ctx: Context<RecordJupiterQuote>,
-        input_mint: String,
-        output_mint: String,
-        amount: u64,
-        slippage_bps: Option<u16>,
-    ) -> Result<()> {
-        instructions::real_jupiter_rebalance::record_jupiter_quote(ctx, input_mint, output_mint, amount, slippage_bps)
-    }
 
-    /// 利回り情報の更新
-    pub fn update_yields(
-        ctx: Context<UpdateYields>,
-        yield_updates: Vec<YieldUpdate>,
-    ) -> Result<()> {
-        instructions::update_yields::handler(ctx, yield_updates)
-    }
 }

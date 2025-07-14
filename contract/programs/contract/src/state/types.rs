@@ -70,11 +70,3 @@ pub struct AllocationTarget {
     pub target_percentage: u16,
 }
 
-/// yield更新パラメータ
-#[derive(AnchorSerialize, AnchorDeserialize)]
-pub struct YieldUpdate {
-    /// トークンシンボル
-    pub symbol: String,
-    /// 新しいAPY (basis points)
-    pub new_apy: u64,
-}

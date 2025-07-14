@@ -132,16 +132,17 @@ ANCHOR_WALLET=~/.config/solana/id.json \
 yarn run ts-node scripts/initialize_portfolio.ts
 ```
 
-### 2. 投資実行
+### 2. USDC Deposit
 
 #### TypeScript での実行
 
 ```typescript
-// scripts/invest_in_equity.ts
+// scripts/deposit_usdc.ts
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { getAssociatedTokenAddress, TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
-async function investInEquity() {
+async function depositUsdc() {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   
@@ -154,11 +155,69 @@ async function investInEquity() {
     program.programId
   );
 
-  // 投資実行
+  // USDC設定
+  const usdcMint = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+  const userUsdcAccount = await getAssociatedTokenAddress(
+    usdcMint,
+    user.publicKey
+  );
+
+  // Portfolio USDC vault PDA
+  const [portfolioUsdcVault] = await PublicKey.findProgramAddress(
+    [Buffer.from("vault"), portfolioPda.toBuffer(), usdcMint.toBuffer()],
+    program.programId
+  );
+
+  // USDC deposit実行
+  const amount = 1000 * 1e6; // 1000 USDC
   const tx = await program.methods
-    .investInEquity(
-      new anchor.BN(1000000000), // 1000 トークン (6 decimals)
-      "SOL"
+    .depositUsdc(new anchor.BN(amount))
+    .accounts({
+      portfolio: portfolioPda,
+      userUsdcAccount,
+      portfolioUsdcVault,
+      usdcMint,
+      owner: user.publicKey,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
+    })
+    .rpc();
+
+  console.log("USDC deposit完了:", tx);
+}
+
+depositUsdc().catch(console.error);
+```
+
+### 3. アロケーション追加/編集
+
+#### TypeScript での実行
+
+```typescript
+// scripts/add_allocation.ts
+import * as anchor from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
+
+async function addAllocation() {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+  
+  const program = anchor.workspace.SloomoPortfolio;
+  const user = provider.wallet;
+
+  // Portfolio PDA取得
+  const [portfolioPda] = await PublicKey.findProgramAddress(
+    [Buffer.from("portfolio"), user.publicKey.toBuffer()],
+    program.programId
+  );
+
+  // アロケーション追加
+  const tx = await program.methods
+    .addOrUpdateAllocation(
+      new PublicKey("So11111111111111111111111111111111111111112"), // SOL
+      "WSOL",
+      3000 // 30%
     )
     .accounts({
       portfolio: portfolioPda,
@@ -166,13 +225,13 @@ async function investInEquity() {
     })
     .rpc();
 
-  console.log("投資実行完了:", tx);
+  console.log("アロケーション追加完了:", tx);
 }
 
-investInEquity().catch(console.error);
+addAllocation().catch(console.error);
 ```
 
-### 3. Jupiterリバランス実行
+### 4. リバランス実行
 
 #### TypeScript での実行
 
@@ -295,53 +354,48 @@ async function checkPortfolio() {
 checkPortfolio().catch(console.error);
 ```
 
-### 5. 利回り更新
+### 5. USDC残高確認
 
 #### TypeScript での実行
 
 ```typescript
-// scripts/update_yields.ts
+// scripts/check_usdc_balance.ts
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 
-async function updateYields() {
+async function checkUsdcBalance() {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   
-  const program = anchor.workspace.SloomoPortfolio;
+  const connection = provider.connection;
   const user = provider.wallet;
 
-  // Portfolio PDA取得
-  const [portfolioPda] = await PublicKey.findProgramAddress(
-    [Buffer.from("portfolio"), user.publicKey.toBuffer()],
-    program.programId
+  // USDC設定
+  const usdcMint = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
+  const usdcTokenAccount = await getAssociatedTokenAddress(
+    usdcMint,
+    user.publicKey
   );
 
-  // 利回り更新データ
-  const yieldUpdates = [
-    {
-      symbol: "SOL",
-      newApy: new anchor.BN(750), // 7.5%
-    },
-    {
-      symbol: "USDC",
-      newApy: new anchor.BN(450), // 4.5%
-    },
-  ];
-
-  // 利回り更新実行
-  const tx = await program.methods
-    .updateYields(yieldUpdates)
-    .accounts({
-      portfolio: portfolioPda,
-      owner: user.publicKey,
-    })
-    .rpc();
-
-  console.log("利回り更新完了:", tx);
+  try {
+    // USDC残高取得
+    const balance = await connection.getTokenAccountBalance(usdcTokenAccount);
+    
+    console.log("=== USDC残高情報 ===");
+    console.log("ユーザー:", user.publicKey.toString());
+    console.log("USDCアカウント:", usdcTokenAccount.toString());
+    console.log("残高:", balance.value.uiAmount, "USDC");
+    console.log("生の残高:", balance.value.amount);
+    console.log("小数点以下桁数:", balance.value.decimals);
+    
+  } catch (error) {
+    console.error("USDCアカウントが見つかりません:", error.message);
+    console.log("devnet faucetからUSDCを取得してください");
+  }
 }
 
-updateYields().catch(console.error);
+checkUsdcBalance().catch(console.error);
 ```
 
 ## 一括実行スクリプト
@@ -352,10 +406,11 @@ updateYields().catch(console.error);
 {
   "scripts": {
     "portfolio:init": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/initialize_portfolio.ts",
-    "portfolio:invest": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/invest_in_equity.ts",
+    "portfolio:deposit": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/deposit_usdc.ts",
+    "portfolio:add-allocation": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/add_allocation.ts",
     "portfolio:rebalance": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/jupiter_rebalance.ts",
     "portfolio:check": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/check_portfolio.ts",
-    "portfolio:update-yields": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/update_yields.ts"
+    "portfolio:check-usdc": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn run ts-node scripts/check_usdc_balance.ts"
   }
 }
 ```
@@ -366,14 +421,17 @@ updateYields().catch(console.error);
 # ポートフォリオ初期化
 yarn portfolio:init
 
-# 投資実行
-yarn portfolio:invest
+# USDCをdeposit
+yarn portfolio:deposit
+
+# 株式トークン選択・%設定してアロケーション作成
+yarn portfolio:add-allocation
+
+# USDC残高確認
+yarn portfolio:check-usdc
 
 # 状態確認
 yarn portfolio:check
-
-# 利回り更新
-yarn portfolio:update-yields
 
 # リバランス実行
 yarn portfolio:rebalance
