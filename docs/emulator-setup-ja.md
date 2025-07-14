@@ -1,6 +1,6 @@
 # Solana Mobile 開発環境セットアップ
 
-このガイドでは、MacでAndroidエミュレーターを使用してSolana Mobile CreditPayアプリを開発・テストするための完全な手順を説明します。
+このガイドでは、MacでAndroidエミュレーターを使用してSolana Mobile Sloomomアプリを開発・テストするための完全な手順を説明します。
 
 ## 前提条件
 
@@ -138,13 +138,7 @@ PORT=8082 npx expo start --dev-client --port 8082
 
 開発サーバーが正常に起動すると、以下のような出力が表示されます：
 
-```
-Starting project at /Users/user/Desktop/credit-pay/credit-pay
-Starting Metro Bundler
-› Opening exp+credit-pay://expo-development-client/?url=http%3A%2F%2F100.84.9.63%3A8081 on [Device Name]
-Waiting on http://localhost:8081
-Android Bundled 7021ms node_modules/expo/AppEntry.js (1356 modules)
-```
+
 
 この状態で、エミュレーター上のアプリに変更が自動的に反映されます。
 
@@ -191,13 +185,13 @@ adb shell am start -n com.android.vending/.AssetBrowserActivity -a android.inten
 
 ## ウォレット接続テスト
 
-### 1. CreditPayアプリでの接続
+### 1. Sloomoアプリでの接続
 
-1. CreditPayアプリを開く
+1. Sloomoアプリを開く
 2. **Connect**ボタンをタップ
 3. インストールしたウォレットアプリが自動的に開く
 4. 接続を**承認**
-5. CreditPayアプリに戻る
+5. Sloomoアプリに戻る
 6. 接続成功を確認
 
 ### 2. エラーハンドリング
@@ -219,4 +213,4 @@ adb shell am start -n com.android.vending/.AssetBrowserActivity -a android.inten
 - 本番用の資産は使用しない
 - エミュレーターでの動作確認後、実機でもテスト
 
-これで、Solana Mobile CreditPayアプリの完全な開発環境が整いました！
+これで、Solana Mobile Sloomoアプリの完全な開発環境が整いました！

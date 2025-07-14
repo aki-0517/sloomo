@@ -78,9 +78,9 @@ export function SignInButton() {
       }
       setSignInInProgress(true);
       await signIn({
-        domain: "creditpay.app",
-        statement: "Sign into Solana Mobile CreditPay",
-        uri: "https://creditpay.app",
+        domain: "sloomo.app",
+        statement: "Sign into Solana Mobile sloomo",
+        uri: "https://sloomo.app",
       });
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : err;

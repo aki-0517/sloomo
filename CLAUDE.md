@@ -130,7 +130,7 @@ Components are organized in feature-based folders:
 #### EAS Build (app/)
 - Uses EAS Build for cloud builds
 - Configured in `eas.json` with development, preview, and production profiles
-- Project name: `credit-pay`
+- Project name: `sloomo`
 
 #### App Configuration
 - Bundle ID: `com.solana.mobile.expo.template`
