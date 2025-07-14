@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { StyleSheet, View, ScrollView, Alert, Image, TouchableOpacity } from "react-native";
 import { Text, ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
+import { Transaction, SystemProgram, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 import { useAuthorization } from "../utils/useAuthorization";
 import { SignInFeature } from "../components/sign-in/sign-in-feature";
@@ -13,6 +14,8 @@ import { mockPortfolio, mockChartData } from "../utils/mock";
 import { useContract } from "../hooks/useContract";
 import { usePortfolioContext } from "../context/PortfolioContext";
 import { theme } from "../theme/colors";
+import { useMobileWallet } from "../utils/useMobileWallet";
+import { useConnection } from "../hooks/useConnection";
 
 console.log('HomeScreen module loading...');
 
@@ -26,6 +29,9 @@ export function HomeScreen() {
     const { tempPortfolio } = usePortfolioContext();
     const [portfolioData, setPortfolioData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [hasInitializeAttempted, setHasInitializeAttempted] = useState(false);
+    const { signAndSendTransaction } = useMobileWallet();
+    const { connection } = useConnection();
     
     console.log('selectedAccount:', selectedAccount);
 
@@ -90,6 +96,9 @@ export function HomeScreen() {
       if (!contract) return;
 
       try {
+        // Mark initialization as attempted (even if it fails)
+        setHasInitializeAttempted(true);
+        
         // Initialize portfolio with 0.1 SOL
         const signature = await contract.initializePortfolio(0.1);
         console.log('✅ Portfolio initialized successfully with signature:', signature);
@@ -121,6 +130,9 @@ export function HomeScreen() {
         );
       } catch (error) {
         console.error('Portfolio initialization error:', error);
+        
+        // Keep initialization as attempted even on failure
+        setHasInitializeAttempted(true);
         
         // Check if it's a timeout error
         if (error instanceof Error && error.message.includes('Transaction was not confirmed')) {
@@ -162,6 +174,70 @@ export function HomeScreen() {
       navigation.navigate('Rebalance' as never);
     };
 
+    const handleMockRebalance = async () => {
+      if (!selectedAccount || !connection || !signAndSendTransaction) {
+        Alert.alert('Error', 'Wallet not connected or not available');
+        return;
+      }
+
+      try {
+        console.log('🎭 Starting mock rebalance with empty transaction...');
+        
+        // Create an empty transaction (just a memo instruction or minimal SOL transfer)
+        const transaction = new Transaction();
+        
+        // Add a very small SOL transfer to self (0.000001 SOL) to make it a valid transaction
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: selectedAccount.publicKey,
+            toPubkey: selectedAccount.publicKey,
+            lamports: 1000, // 0.000001 SOL
+          })
+        );
+
+        // Get the latest blockhash
+        const { blockhash } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = selectedAccount.publicKey;
+
+        console.log('🔐 Sending mock rebalance transaction...');
+        const signature = await signAndSendTransaction(transaction);
+        console.log('✅ Mock rebalance transaction sent:', signature);
+
+        Alert.alert(
+          'Mock Rebalance Complete',
+          `Mock rebalance transaction sent successfully!\n\nTransaction: ${signature}`,
+          [
+            {
+              text: 'View on Explorer',
+              onPress: () => {
+                console.log(`🔗 Opening transaction: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+              }
+            },
+            {
+              text: 'OK'
+            }
+          ]
+        );
+      } catch (error) {
+        console.error('Mock rebalance error:', error);
+        
+        // Handle different error types
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorName = error instanceof Error ? error.name : '';
+        
+        if (errorMessage.includes('CancellationException') || 
+            errorMessage.includes('User cancelled') ||
+            errorName.includes('SolanaMobileWalletAdapterError') ||
+            errorMessage.includes('java.util.concurrent.CancellationException')) {
+          console.log('🚫 User cancelled the transaction');
+          Alert.alert('Transaction Cancelled', 'The transaction was cancelled by the user.');
+        } else {
+          Alert.alert('Error', `Mock rebalance failed: ${errorMessage}`);
+        }
+      }
+    };
+
     return (
       <View style={styles.screenContainer}>
         <View style={styles.logoContainer}>
@@ -193,15 +269,15 @@ export function HomeScreen() {
               <ActionButtons 
                 onEditPortfolio={handleEditPortfolio}
                 onDeposit={handleDeposit}
-                onRebalance={handleRebalance}
+                onRebalance={!!portfolioData || !!tempPortfolio ? handleRebalance : handleMockRebalance}
                 onInitialize={handleInitializePortfolio}
-                isInitialized={!!portfolioData || !!tempPortfolio}
+                isInitialized={!!portfolioData || !!tempPortfolio || hasInitializeAttempted}
               />
               
               {/* Debug state information */}
               <View style={styles.debugContainer}>
                 <Text style={styles.debugText}>
-                  🔘 Button State: {(!!portfolioData || !!tempPortfolio) ? 'REBALANCE' : 'INITIALIZE'}
+                  🔘 Button State: {(!!portfolioData || !!tempPortfolio || hasInitializeAttempted) ? 'REBALANCE' : 'INITIALIZE'}
                 </Text>
                 <Text style={styles.debugText}>
                   📊 portfolioData: {portfolioData ? 'EXISTS' : 'NULL'}
@@ -210,35 +286,19 @@ export function HomeScreen() {
                   📝 tempPortfolio: {tempPortfolio ? 'EXISTS' : 'NULL'}
                 </Text>
                 <Text style={styles.debugText}>
-                  🔍 isInitialized: {String(!!portfolioData || !!tempPortfolio)}
+                  🔍 isInitialized: {String(!!portfolioData || !!tempPortfolio || hasInitializeAttempted)}
+                </Text>
+                <Text style={styles.debugText}>
+                  🎯 hasInitializeAttempted: {String(hasInitializeAttempted)}
                 </Text>
                 <Text style={styles.debugText}>
                   📈 Total Value: {portfolioData?.totalValue?.toString() || 'N/A'}
                 </Text>
+                <Text style={styles.debugText}>
+                  🎭 Rebalance Mode: {!!portfolioData || !!tempPortfolio ? 'REAL' : 'MOCK'}
+                </Text>
               </View>
               
-              {/* Debug button to manually refresh portfolio data */}
-              <View style={styles.debugContainer}>
-                <Text style={styles.debugText}>
-                  Debug: portfolioData={portfolioData ? 'found' : 'null'}, tempPortfolio={tempPortfolio ? 'found' : 'null'}
-                </Text>
-                <TouchableOpacity style={styles.refreshButton} onPress={checkPortfolio}>
-                  <Text style={styles.refreshButtonText}>🔄 Refresh Portfolio Data</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.refreshButton, { backgroundColor: 'red', marginTop: 10 }]} 
-                  onPress={() => {
-                    console.log('🔄 Force refresh - setting portfolioData to null first');
-                    setPortfolioData(null);
-                    setTimeout(() => {
-                      console.log('🔄 Now checking portfolio...');
-                      checkPortfolio();
-                    }, 100);
-                  }}
-                >
-                  <Text style={styles.refreshButtonText}>🔄 Force Refresh</Text>
-                </TouchableOpacity>
-              </View>
             </ScrollView>
           )
         ) : (
