@@ -7,8 +7,7 @@ interface ActionButtonsProps {
   onDeposit: () => void;
   onRebalance: () => void;
   onInitialize?: () => void;
-  onRefresh?: () => void;
-  showInitialize?: boolean;
+  isInitialized?: boolean;
 }
 
 export const ActionButtons: React.FC<ActionButtonsProps> = ({
@@ -16,41 +15,35 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   onDeposit,
   onRebalance,
   onInitialize,
-  onRefresh,
-  showInitialize = false
+  isInitialized = false
 }) => {
+  console.log('🔘 ActionButtons rendering - isInitialized:', isInitialized);
+  console.log('🔘 ActionButtons will show:', isInitialized ? 'REBALANCE' : 'INITIALIZE');
+  
   return (
     <View style={styles.container}>
-      {showInitialize && onInitialize ? (
-        <View style={styles.primaryButtonsContainer}>
-          <TouchableOpacity style={[styles.button, styles.initializeButton]} onPress={onInitialize}>
-            <Text style={styles.initializeButtonText}>Initialize Portfolio</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.button, styles.editButton]} onPress={onEditPortfolio}>
-            <Text style={styles.editButtonText}>Edit Allocation</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={onEditPortfolio}>
-          <Text style={styles.primaryButtonText}>Edit Allocation</Text>
-        </TouchableOpacity>
-      )}
+      <TouchableOpacity style={[styles.button, styles.primaryButton]} onPress={onEditPortfolio}>
+        <Text style={styles.primaryButtonText}>Edit Allocation</Text>
+      </TouchableOpacity>
       
       <View style={styles.secondaryButtonsContainer}>
         <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onDeposit}>
           <Text style={styles.secondaryButtonText}>Deposit</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onRebalance}>
-          <Text style={styles.secondaryButtonText}>Rebalance</Text>
-        </TouchableOpacity>
+        {isInitialized ? (
+          <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onRebalance}>
+            <Text style={styles.secondaryButtonText}>Rebalance</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.button, styles.secondaryButton, styles.initializeSecondaryButton]} 
+            onPress={onInitialize}
+          >
+            <Text style={[styles.secondaryButtonText, styles.initializeSecondaryButtonText]}>Initialize</Text>
+          </TouchableOpacity>
+        )}
       </View>
-      
-      {showInitialize && onRefresh && (
-        <TouchableOpacity style={[styles.button, styles.refreshButton]} onPress={onRefresh}>
-          <Text style={styles.refreshButtonText}>Refresh Portfolio</Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
@@ -76,11 +69,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600'
   },
-  primaryButtonsContainer: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.sm
-  },
   secondaryButtonsContainer: {
     flexDirection: 'row',
     gap: theme.spacing.sm
@@ -96,35 +84,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500'
   },
-  initializeButton: {
-    flex: 1,
-    backgroundColor: theme.colors.success
+  initializeSecondaryButton: {
+    backgroundColor: theme.colors.success,
+    borderColor: theme.colors.success
   },
-  initializeButtonText: {
+  initializeSecondaryButtonText: {
     color: theme.colors.surface,
-    fontSize: 16,
     fontWeight: '600'
-  },
-  editButton: {
-    flex: 1,
-    backgroundColor: theme.colors.primary,
-    borderWidth: 1,
-    borderColor: theme.colors.primary
-  },
-  editButtonText: {
-    color: theme.colors.surface,
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  refreshButton: {
-    backgroundColor: theme.colors.surfaceVariant,
-    marginTop: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.border
-  },
-  refreshButtonText: {
-    color: theme.colors.text,
-    fontSize: 14,
-    fontWeight: '500'
   }
 });

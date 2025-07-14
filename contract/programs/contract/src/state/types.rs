@@ -48,6 +48,10 @@ impl PerformanceSnapshot {
 pub struct InitPortfolioParams {
     /// 初期配分設定
     pub initial_allocations: Vec<AllocationParams>,
+    /// 初期SOL投資額（lamports）
+    pub initial_sol_amount: u64,
+    /// Jupiter自動スワップを実行するかどうか
+    pub enable_jupiter_swap: bool,
 }
 
 /// 配分パラメータ

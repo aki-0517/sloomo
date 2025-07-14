@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView } from 'react-native';
-import { Text, TextInput, Button, Card, RadioButton } from 'react-native-paper';
+import { Text, TextInput, Button, Card } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useContract } from '../hooks/useContract';
 import { theme } from '../theme/colors';
 
 export function DepositScreen() {
   const [amount, setAmount] = useState('');
-  const [tokenType, setTokenType] = useState<'USDC' | 'SOL'>('USDC');
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
   const contract = useContract();
@@ -26,17 +25,11 @@ export function DepositScreen() {
 
     setIsLoading(true);
     try {
-      let signature: string;
-      
-      if (tokenType === 'USDC') {
-        signature = await contract.depositUsdc(depositAmount);
-      } else {
-        signature = await contract.depositSol(depositAmount);
-      }
+      const signature = await contract.depositSol(depositAmount);
 
       Alert.alert(
         'Success',
-        `${tokenType} deposit successful!`,
+        'SOL deposit successful!',
         [
           {
             text: 'View Transaction',
@@ -53,7 +46,22 @@ export function DepositScreen() {
       );
     } catch (error) {
       console.error('Deposit error:', error);
-      Alert.alert('Error', `Deposit failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+        
+        // Provide helpful hints based on error type
+        if (errorMessage.includes('Insufficient SOL')) {
+          errorMessage += '\n\n💡 Hint: Try getting more devnet SOL from https://faucet.solana.com/';
+        } else if (errorMessage.includes('insufficient funds')) {
+          errorMessage += '\n\n💡 Hint: Check your wallet balance and ensure you have enough SOL for transaction fees.';
+        } else if (errorMessage.includes('blockhash')) {
+          errorMessage += '\n\n💡 Hint: Network issue. Please try again.';
+        }
+      }
+      
+      Alert.alert('Deposit Failed', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -64,9 +72,7 @@ export function DepositScreen() {
     
     try {
       const balances = await contract.getUserBalances();
-      const maxAmount = tokenType === 'SOL' 
-        ? Math.max(0, balances.sol - 0.01) // Reserve 0.01 SOL for fees
-        : balances.usdc;
+      const maxAmount = Math.max(0, balances.sol - 0.05); // Reserve 0.05 SOL for account creation and fees
       setAmount(maxAmount.toString());
     } catch (error) {
       console.error('Error getting balance:', error);
@@ -78,26 +84,9 @@ export function DepositScreen() {
       <Card style={styles.card}>
         <Card.Content>
           <Text variant="headlineSmall" style={styles.title}>
-            Deposit Funds
+            Deposit SOL
           </Text>
           
-          <Text style={styles.label}>Select Token</Text>
-          <RadioButton.Group 
-            onValueChange={(value) => setTokenType(value as 'USDC' | 'SOL')} 
-            value={tokenType}
-          >
-            <View style={styles.radioContainer}>
-              <View style={styles.radioItem}>
-                <RadioButton value="USDC" />
-                <Text>USDC</Text>
-              </View>
-              <View style={styles.radioItem}>
-                <RadioButton value="SOL" />
-                <Text>SOL</Text>
-              </View>
-            </View>
-          </RadioButton.Group>
-
           <Text style={styles.label}>Amount</Text>
           <View style={styles.inputContainer}>
             <TextInput
@@ -105,11 +94,11 @@ export function DepositScreen() {
               mode="outlined"
               value={amount}
               onChangeText={setAmount}
-              placeholder={`Enter ${tokenType} amount`}
+              placeholder="Enter SOL amount"
               keyboardType="numeric"
               right={
                 <TextInput.Affix 
-                  text={tokenType} 
+                  text="SOL" 
                   textStyle={styles.suffix}
                 />
               }
@@ -124,10 +113,7 @@ export function DepositScreen() {
           </View>
 
           <Text style={styles.infoText}>
-            {tokenType === 'USDC' 
-              ? 'Deposit USDC to your portfolio. Make sure you have USDC in your wallet.'
-              : 'Deposit SOL to your portfolio. A small amount will be reserved for transaction fees.'
-            }
+            Deposit SOL to your portfolio. 0.05 SOL will be reserved for account creation and transaction fees.
           </Text>
 
           <View style={styles.buttonContainer}>
@@ -138,7 +124,7 @@ export function DepositScreen() {
               loading={isLoading}
               style={styles.depositButton}
             >
-              Deposit {tokenType}
+              Deposit SOL
             </Button>
             
             <Button
@@ -175,15 +161,6 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.md,
     marginBottom: theme.spacing.sm,
     color: theme.colors.text,
-  },
-  radioContainer: {
-    flexDirection: 'row',
-    marginBottom: theme.spacing.md,
-  },
-  radioItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: theme.spacing.lg,
   },
   inputContainer: {
     flexDirection: 'row',

@@ -346,11 +346,60 @@
           "signer": true
         },
         {
+          "name": "user_wsol_account",
+          "docs": [
+            "ユーザーのwSOLトークンアカウント"
+          ],
+          "writable": true
+        },
+        {
+          "name": "portfolio_wsol_vault",
+          "docs": [
+            "ポートフォリオのwSOLボルトアカウント"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "portfolio"
+              },
+              {
+                "kind": "account",
+                "path": "wsol_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "wsol_mint",
+          "docs": [
+            "wSOLミント（Native Mint）"
+          ]
+        },
+        {
           "name": "system_program",
           "docs": [
             "システムプログラム"
           ],
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "トークンプログラム"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": [
@@ -1143,6 +1192,20 @@
                 }
               }
             }
+          },
+          {
+            "name": "initial_sol_amount",
+            "docs": [
+              "初期SOL投資額（lamports）"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "enable_jupiter_swap",
+            "docs": [
+              "Jupiter自動スワップを実行するかどうか"
+            ],
+            "type": "bool"
           }
         ]
       }
@@ -1294,6 +1357,20 @@
               "初期配分数"
             ],
             "type": "u8"
+          },
+          {
+            "name": "initial_sol_amount",
+            "docs": [
+              "初期SOL投資額"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "jupiter_swap_enabled",
+            "docs": [
+              "Jupiter自動スワップが有効かどうか"
+            ],
+            "type": "bool"
           }
         ]
       }

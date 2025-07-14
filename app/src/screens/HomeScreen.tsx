@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ScrollView, Alert, Image } from "react-native";
+import { StyleSheet, View, ScrollView, Alert, Image, TouchableOpacity } from "react-native";
 import { Text, ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 
@@ -37,16 +37,36 @@ export function HomeScreen() {
     }, [selectedAccount, contract]);
 
     const checkPortfolio = async () => {
-      if (!contract) return;
+      if (!contract) {
+        console.log('❌ No contract available for checkPortfolio');
+        return;
+      }
       
+      console.log('🔍 checkPortfolio called - starting...');
       setIsLoading(true);
       try {
+        console.log('🔍 Checking portfolio data...');
         const data = await contract.getPortfolioData();
+        console.log('📊 Portfolio data result:', data);
+        console.log('📊 Setting portfolioData state to:', data);
         setPortfolioData(data);
+        
+        if (data) {
+          console.log('✅ Portfolio found - should show Rebalance button');
+          console.log('📊 Portfolio total value:', data.totalValue?.toString());
+          console.log('📊 Portfolio allocations:', data.allocations?.length);
+          console.log('🔘 Button should be: REBALANCE');
+        } else {
+          console.log('❌ No portfolio found - should show Initialize button');
+          console.log('🔘 Button should be: INITIALIZE');
+        }
       } catch (error) {
-        console.error('Error checking portfolio:', error);
+        console.error('❌ Error checking portfolio:', error);
+        setPortfolioData(null);
+        console.log('🔘 Button should be: INITIALIZE (due to error)');
       } finally {
         setIsLoading(false);
+        console.log('🔍 checkPortfolio completed');
       }
     };
 
@@ -58,7 +78,7 @@ export function HomeScreen() {
 
       Alert.alert(
         'Initialize Portfolio',
-        'This will create a new portfolio with SOL (60%) and USDC (40%) allocation. Continue?',
+        'This will create a new portfolio with 0.1 SOL deposit and GOOGLx (60%) / COINx (40%) allocation. Continue?',
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Initialize', onPress: executeInitialization }
@@ -70,28 +90,63 @@ export function HomeScreen() {
       if (!contract) return;
 
       try {
-        const signature = await contract.initializePortfolio();
+        // Initialize portfolio with 0.1 SOL
+        const signature = await contract.initializePortfolio(0.1);
+        console.log('✅ Portfolio initialized successfully with signature:', signature);
+        
+        // Immediately check portfolio after initialization
+        console.log('🔄 Checking portfolio immediately after initialization...');
+        await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
+        await checkPortfolio();
+        
         Alert.alert(
           'Success',
-          'Portfolio initialized successfully!',
+          `Portfolio initialized successfully with 0.1 SOL deposit!\n\nTransaction: ${signature}`,
           [
             {
-              text: 'View Transaction',
+              text: 'View on Explorer',
               onPress: () => {
-                console.log(`Transaction: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+                console.log(`🔗 Opening transaction: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+                // In a real app, you would open the URL using Linking.openURL()
               }
             },
             {
               text: 'OK',
               onPress: () => {
-                checkPortfolio(); // Reload portfolio data
+                console.log('🔄 Final portfolio check after user confirms...');
+                setTimeout(() => checkPortfolio(), 1000);
               }
             }
           ]
         );
       } catch (error) {
         console.error('Portfolio initialization error:', error);
-        Alert.alert('Error', `Portfolio initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        
+        // Check if it's a timeout error
+        if (error instanceof Error && error.message.includes('Transaction was not confirmed')) {
+          const signatureMatch = error.message.match(/signature ([a-zA-Z0-9]+)/);
+          const signature = signatureMatch ? signatureMatch[1] : null;
+          
+          Alert.alert(
+            'Transaction Timeout',
+            `The transaction might have succeeded but took longer than expected to confirm.\n\n${signature ? `Check status at: https://explorer.solana.com/tx/${signature}?cluster=devnet` : 'Please check your transaction history.'}`,
+            [
+              {
+                text: 'Check Portfolio',
+                onPress: () => {
+                  console.log('🔄 Checking portfolio after timeout...');
+                  setTimeout(() => checkPortfolio(), 1000);
+                }
+              },
+              {
+                text: 'OK',
+                style: 'cancel'
+              }
+            ]
+          );
+        } else {
+          Alert.alert('Error', `Portfolio initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       }
     };
 
@@ -140,9 +195,50 @@ export function HomeScreen() {
                 onDeposit={handleDeposit}
                 onRebalance={handleRebalance}
                 onInitialize={handleInitializePortfolio}
-                onRefresh={checkPortfolio}
-                showInitialize={!portfolioData && !tempPortfolio}
+                isInitialized={!!portfolioData || !!tempPortfolio}
               />
+              
+              {/* Debug state information */}
+              <View style={styles.debugContainer}>
+                <Text style={styles.debugText}>
+                  🔘 Button State: {(!!portfolioData || !!tempPortfolio) ? 'REBALANCE' : 'INITIALIZE'}
+                </Text>
+                <Text style={styles.debugText}>
+                  📊 portfolioData: {portfolioData ? 'EXISTS' : 'NULL'}
+                </Text>
+                <Text style={styles.debugText}>
+                  📝 tempPortfolio: {tempPortfolio ? 'EXISTS' : 'NULL'}
+                </Text>
+                <Text style={styles.debugText}>
+                  🔍 isInitialized: {String(!!portfolioData || !!tempPortfolio)}
+                </Text>
+                <Text style={styles.debugText}>
+                  📈 Total Value: {portfolioData?.totalValue?.toString() || 'N/A'}
+                </Text>
+              </View>
+              
+              {/* Debug button to manually refresh portfolio data */}
+              <View style={styles.debugContainer}>
+                <Text style={styles.debugText}>
+                  Debug: portfolioData={portfolioData ? 'found' : 'null'}, tempPortfolio={tempPortfolio ? 'found' : 'null'}
+                </Text>
+                <TouchableOpacity style={styles.refreshButton} onPress={checkPortfolio}>
+                  <Text style={styles.refreshButtonText}>🔄 Refresh Portfolio Data</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.refreshButton, { backgroundColor: 'red', marginTop: 10 }]} 
+                  onPress={() => {
+                    console.log('🔄 Force refresh - setting portfolioData to null first');
+                    setPortfolioData(null);
+                    setTimeout(() => {
+                      console.log('🔄 Now checking portfolio...');
+                      checkPortfolio();
+                    }, 100);
+                  }}
+                >
+                  <Text style={styles.refreshButtonText}>🔄 Force Refresh</Text>
+                </TouchableOpacity>
+              </View>
             </ScrollView>
           )
         ) : (
@@ -229,7 +325,29 @@ const styles = StyleSheet.create({
     minWidth: 200,
   },
   refreshButton: {
-    marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.primary,
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    marginTop: theme.spacing.sm,
+  },
+  refreshButtonText: {
+    color: theme.colors.surface,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  debugContainer: {
+    padding: theme.spacing.md,
+    margin: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  debugText: {
+    fontSize: 12,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
   },
   signInContainer: {
     flex: 1,
