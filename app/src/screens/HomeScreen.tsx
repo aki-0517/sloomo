@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, ScrollView, Alert } from "react-native";
+import { StyleSheet, View, ScrollView, Alert, Image } from "react-native";
 import { Text, ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 
@@ -109,12 +109,13 @@ export function HomeScreen() {
 
     return (
       <View style={styles.screenContainer}>
-        <Text
-          style={styles.title}
-          variant="headlineMedium"
-        >
-          Sloomo
-        </Text>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../assets/sloomo-logo.png')}
+            style={styles.logo}
+            resizeMode="cover"
+          />
+        </View>
         {selectedAccount ? (
           isLoading ? (
             <View style={styles.loadingContainer}>
@@ -171,12 +172,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: theme.colors.background,
   },
-  title: {
-    fontWeight: "bold",
+  logoContainer: {
+    alignItems: "center",
     marginBottom: theme.spacing.md,
     marginTop: theme.spacing.lg,
-    textAlign: "center",
-    color: theme.colors.primary,
+    height: 60,
+    overflow: "hidden",
+  },
+  logo: {
+    width: 180,
+    height: 180,
+    marginTop: -60,
   },
   scrollView: {
     flex: 1,
