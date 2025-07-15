@@ -929,31 +929,31 @@ export function parseAnchorError(error: any): string {
     const errorCode = error.error.errorCode.code;
     
     const errorMessages: Record<string, string> = {
-      InvalidAllocationPercentage: "配分比率が無効です",
-      InsufficientBalance: "残高が不足しています",
-      AllocationOverflow: "配分の合計が100%を超えています",
-      RebalanceTooFrequent: "リバランスの実行間隔が短すぎます",
-      Unauthorized: "認証されていないアクセスです",
-      InvalidTokenMint: "無効なトークンミントです",
-      YieldUpdateTooFrequent: "利回り更新が頻繁すぎます",
-      MathOverflow: "数値オーバーフローが発生しました",
-      InvalidApy: "無効なAPY値です",
-      RebalanceInProgress: "リバランス処理中です",
-      SymbolTooLong: "シンボルが長すぎます",
+      InvalidAllocationPercentage: "Invalid allocation percentage",
+      InsufficientBalance: "Insufficient balance",
+      AllocationOverflow: "Total allocation exceeds 100%",
+      RebalanceTooFrequent: "Rebalancing interval is too short",
+      Unauthorized: "Unauthorized access",
+      InvalidTokenMint: "Invalid token mint",
+      YieldUpdateTooFrequent: "Yield updates are too frequent",
+      MathOverflow: "Numerical overflow occurred",
+      InvalidApy: "Invalid APY value",
+      RebalanceInProgress: "Rebalancing in progress",
+      SymbolTooLong: "Symbol is too long",
     };
     
-    return errorMessages[errorCode] || `プログラムエラー: ${errorCode}`;
+    return errorMessages[errorCode] || `Program error: ${errorCode}`;
   }
   
   if (error.message?.includes("Account does not exist")) {
-    return "アカウントが見つかりません";
+    return "Account not found";
   }
   
   if (error.message?.includes("Insufficient funds")) {
-    return "手数料に必要なSOLが不足しています";
+    return "Insufficient SOL for transaction fees";
   }
   
-  return error.message || "不明なエラーが発生しました";
+  return error.message || "An unknown error occurred";
 }
 
 // Global error boundary
@@ -965,7 +965,7 @@ export function useErrorHandler() {
     console.error("Error:", { error, errorInfo, message });
     
     // Show user-friendly error
-    Alert.alert("エラー", message);
+    Alert.alert("Error", message);
   }, []);
 }
 ```

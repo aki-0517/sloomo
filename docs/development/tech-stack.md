@@ -1,46 +1,46 @@
-# React Native（Expo）× xStock × Solana Mobile Tech Stack
+# React Native (Expo) × xStock × Solana Mobile Tech Stack
 
-2025年のSolana Mobile Stack統合Androidアプリ開発ハッカソン要件に基づき、ExpoとxStock API統合を活用したReact Native開発スタックガイドです。
+A React Native development stack guide utilizing Expo and xStock API integration, based on the 2025 Solana Mobile Stack integrated Android app development hackathon requirements.
 
-## コア要件（ハッカソン）
+## Core Requirements (Hackathon)
 
-### 必須機能
-- **Androidアプリ**: dApp Store公開可能なAndroidアプリ
-- **Solana Mobile Stack (SMS)**: SMSコンポーネントとネイティブ機能の活用
-- **Mobile Wallet Adapter**: MWAによるウォレット連携
-- **BONK統合**: （任意）BONKトークン連携でボーナス
-- **xStock統合**: equity token取引とポートフォリオ管理にxStock APIを利用
-- **Expo**: クロスプラットフォーム開発・ビルドにExpoを利用
+### Essential Features
+- **Android App**: Android app publishable to dApp Store
+- **Solana Mobile Stack (SMS)**: Utilizing SMS components and native features
+- **Mobile Wallet Adapter**: Wallet integration via MWA
+- **BONK Integration**: (Optional) BONK token integration for bonus
+- **xStock Integration**: Using xStock API for equity token trading and portfolio management
+- **Expo**: Using Expo for cross-platform development and builds
 
-## React Native（Expo）開発スタック
+## React Native (Expo) Development Stack
 
-### 1. 開発フレームワーク
+### 1. Development Framework
 
 #### Expo + React Native for Android
-- **Expo**: Expo CLIでプロジェクト管理・ビルド・OTAアップデート
-- **React Native**: クロスプラットフォームUI開発
-- **利点**:
-  - Expo Goで即時プレビュー
-  - OTAアップデート・ビルド自動化
-  - Android/iOS両対応
-  - 豊富なExpo/React Nativeライブラリ
-- **Solana対応**: ExpoでもSolana Mobile Stack連携可能
-- **xStock対応**: Expo環境でxStock equity token API利用可
+- **Expo**: Project management, builds, and OTA updates with Expo CLI
+- **React Native**: Cross-platform UI development
+- **Benefits**:
+  - Instant preview with Expo Go
+  - OTA updates and build automation
+  - Support for both Android/iOS
+  - Rich Expo/React Native library ecosystem
+- **Solana Support**: Solana Mobile Stack integration possible with Expo
+- **xStock Support**: xStock equity token API usable in Expo environment
 
-### 2. xStock API統合
+### 2. xStock API Integration
 
-#### xStockの役割
-- **equity token取引**: 株式のトークン化と取引
-- **リアルタイム価格**: ライブ株価データ
-- **ポートフォリオ管理**: 株式ポートフォリオの統合管理
-- **市場データ**: NASDAQ、NYSE等主要市場データ
+#### xStock Role
+- **Equity token trading**: Stock tokenization and trading
+- **Real-time pricing**: Live stock price data
+- **Portfolio management**: Integrated stock portfolio management
+- **Market data**: Major market data from NASDAQ, NYSE, etc.
 
-#### 推奨パッケージ
+#### Recommended Packages
 ```bash
 expo install axios react-query
 ```
 
-#### 例: xStock API初期化
+#### Example: xStock API Initialization
 ```typescript
 import axios from 'axios';
 
@@ -52,82 +52,82 @@ const xStockAPI = axios.create({
   }
 });
 
-// equity token価格取得
+// Get equity token price
 const getEquityTokenPrice = async (symbol: string) => {
   const response = await xStockAPI.get(`/tokens/${symbol}/price`);
   return response.data;
 };
 ```
 
-### 3. Solana Mobile Stack & Wallet連携
+### 3. Solana Mobile Stack & Wallet Integration
 
-#### 必須パッケージ
+#### Required Packages
 ```typescript
 expo install @solana-mobile/mobile-wallet-adapter-protocol @solana-mobile/mobile-wallet-adapter-protocol-web3js @solana/web3.js
 ```
 
-#### MWA（Mobile Wallet Adapter）
-- WebSocketベースでdAppとウォレットを接続
-- Phantom, Backpack, Solflare等に対応
-- 署名・認証・残高取得
-- equity tokenトランザクション実行
+#### MWA (Mobile Wallet Adapter)
+- WebSocket-based connection between dApp and wallet
+- Supports Phantom, Backpack, Solflare, etc.
+- Signing, authentication, balance retrieval
+- Equity token transaction execution
 
 #### Seed Vault
-- Androidのセキュアエレメント活用
-- MWA経由でアクセス
+- Utilizes Android secure element
+- Access via MWA
 
-### 4. UI/UXフレームワーク
+### 4. UI/UX Framework
 
-#### Expo対応UIライブラリ
+#### Expo-Compatible UI Libraries
 ```typescript
 expo install react-native-paper react-native-elements react-native-vector-icons victory-native
 ```
-- **react-native-paper**: マテリアルデザイン
-- **react-native-elements**: クロスプラットフォームUI
-- **react-native-vector-icons**: アイコン
-- **victory-native**: 高性能チャート（株価チャート等）
+- **react-native-paper**: Material Design
+- **react-native-elements**: Cross-platform UI
+- **react-native-vector-icons**: Icons
+- **victory-native**: High-performance charts (stock price charts, etc.)
 
-#### Equity Trading特化UI例
-- ウォレット接続ボタン
-- 株価チャート表示
-- ポートフォリオ円グラフ
-- 1タップ取引ボタン
+#### Equity Trading Specialized UI Examples
+- Wallet connection button
+- Stock price chart display
+- Portfolio pie chart
+- One-tap trading button
 
-### 5. ステート管理
+### 5. State Management
 
-#### 推奨ソリューション
+#### Recommended Solutions
 ```typescript
 expo install @reduxjs/toolkit zustand react-query
 ```
-- **Redux Toolkit**: 複雑な状態管理
-- **zustand**: 軽量な状態管理
-- **react-query**: サーバー状態管理（xStock APIとも相性良）
+- **Redux Toolkit**: Complex state management
+- **zustand**: Lightweight state management
+- **react-query**: Server state management (works well with xStock API)
 
-#### ウォレット・xStock連携例
-- 認証状態・ユーザー情報をローカルで管理
-- equity tokenトランザクション履歴や残高をxStock APIで管理
-- リアルタイム株価データをreact-queryでキャッシュ
+#### Wallet & xStock Integration Examples
+- Manage authentication state and user info locally
+- Manage equity token transaction history and balances via xStock API
+- Cache real-time stock price data with react-query
 
-### 6. テスト・品質管理
+### 6. Testing & Quality Management
 
-#### テストフレームワーク
+#### Testing Framework
 ```typescript
 expo install jest @testing-library/react-native
 ```
-- **jest**: JSテスト
-- **@testing-library/react-native**: RNテスト
-- **detox**: E2Eテスト（必要に応じて）
+- **jest**: JS testing
+- **@testing-library/react-native**: RN testing
+- **detox**: E2E testing (as needed)
 
-#### コード品質
+#### Code Quality
 ```typescript
 expo install eslint prettier typescript
 ```
 
-### 7. ビルド・デプロイ
+### 7. Build & Deploy
 
-#### Expoビルド
+#### Expo Build
 ```json
-// package.json scripts例
+// package.json scripts example
 {
   "scripts": {
     "start": "expo start",
@@ -138,12 +138,12 @@ expo install eslint prettier typescript
   }
 }
 ```
-- **EAS Build**: Expo公式のビルド/配信サービス
-- **GitHub Actions**: CI/CD自動化
-- **Fastlane**: ストア配信自動化（必要に応じて）
-- **Solana dApp Store**: 配信先
+- **EAS Build**: Official Expo build/distribution service
+- **GitHub Actions**: CI/CD automation
+- **Fastlane**: Store distribution automation (as needed)
+- **Solana dApp Store**: Distribution destination
 
-### 8. 開発環境セットアップ
+### 8. Development Environment Setup
 
 #### Android/Expo/xStock
 ```bash
@@ -151,14 +151,14 @@ expo install eslint prettier typescript
 # Expo CLI
 npm install -g expo-cli
 
-# Android Studio（SDK Platform 31+）
-# ANDROID_HOME設定
+# Android Studio (SDK Platform 31+)
+# ANDROID_HOME configuration
 
-# xStock API key取得
-# XSTOCK_API_URL, XSTOCK_API_KEY設定
+# xStock API key acquisition
+# XSTOCK_API_URL, XSTOCK_API_KEY configuration
 ```
 
-#### Expoプロジェクト初期化
+#### Expo Project Initialization
 ```bash
 expo init sloomo-equity-app
 cd sloomo-equity-app
@@ -166,53 +166,53 @@ expo install axios react-query @solana/web3.js
 expo start
 ```
 
-### 9. プロジェクト構成例
+### 9. Project Structure Example
 
 ```
 sloomo/
 ├── app/                  # Expo App Router
-├── components/           # UIコンポーネント
-│   ├── portfolio/        # ポートフォリオ関連
-│   ├── trading/          # equity token取引関連
-│   └── charts/           # 株価チャート関連
-├── screens/              # 画面
-├── services/             # ビジネスロジック
-│   ├── xstock/           # xStock API連携
-│   └── solana/           # Solana連携
-├── api/                  # xStock/外部API
-├── store/                # 状態管理
-├── constants/            # 定数
-├── assets/               # 画像・フォント
-├── docs/                 # ドキュメント
+├── components/           # UI Components
+│   ├── portfolio/        # Portfolio-related
+│   ├── trading/          # Equity token trading-related
+│   └── charts/           # Stock price chart-related
+├── screens/              # Screens
+├── services/             # Business Logic
+│   ├── xstock/           # xStock API integration
+│   └── solana/           # Solana integration
+├── api/                  # xStock/External API
+├── store/                # State management
+├── constants/            # Constants
+├── assets/               # Images & Fonts
+├── docs/                 # Documentation
 └── ...
 ```
 
-### 10. xStock × Solana連携例
-- ウォレット認証→xStock equity token取引
-- Solana上でequity tokenトランザクション実行
-- xStock APIでリアルタイム株価・ポートフォリオ管理
-- 1タップでequity token売買とリバランス実行
-- BONKトークンでの手数料支払い（ボーナス対象）
+### 10. xStock × Solana Integration Examples
+- Wallet authentication → xStock equity token trading
+- Execute equity token transactions on Solana
+- Real-time stock prices and portfolio management with xStock API
+- One-tap equity token trading and rebalancing
+- Fee payment with BONK tokens (bonus eligible)
 
-### 11. ポートフォリオ管理機能
+### 11. Portfolio Management Features
 
-#### コア機能実装
+#### Core Feature Implementation
 ```typescript
-// ポートフォリオ可視化
+// Portfolio visualization
 import { VictoryPie, VictoryChart } from 'victory-native';
 
-// 1タップリバランス
+// One-tap rebalancing
 const rebalancePortfolio = async (allocations: PortfolioAllocation[]) => {
   const transactions = await xStockAPI.post('/portfolio/rebalance', {
     allocations,
     walletAddress: wallet.publicKey
   });
   
-  // Solanaトランザクション実行
+  // Execute Solana transactions
   return await executeTransactions(transactions.data);
 };
 ```
 
 ---
 
-このスタックで、Expoの高速開発・xStock APIのequity token取引・Solana Mobile StackのWeb3連携を組み合わせ、Android向け株式投資dAppを効率的に開発できます。
+With this stack, you can efficiently develop Android-focused equity investment dApps by combining Expo's rapid development, xStock API equity token trading, and Solana Mobile Stack's Web3 integration.

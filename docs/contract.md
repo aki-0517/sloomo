@@ -1,39 +1,42 @@
-# Sloomo スマートコントラクト実装ガイド
+# Sloomo Smart Contract Implementation Guide
 
-Anchor/Rust を使用したSolana プログラム開発のための完全ガイド
-
----
-
-## 目次
-
-1. [プロジェクト概要](#プロジェクト概要)
-2. [環境設定](#環境設定)
-3. [アーキテクチャ設計](#アーキテクチャ設計)
-4. [コア機能実装](#コア機能実装)
-5. [セキュリティ対策](#セキュリティ対策)
-6. [テスト戦略](#テスト戦略)
-7. [呼び出し動作確認手順](#呼び出し動作確認手順)
-8. [デプロイメント](#デプロイメント)
-9. [クライアント統合](#クライアント統合)
+Complete guide for Solana program development using Anchor/Rust
 
 ---
 
-## プロジェクト概要
+## Table of Contents
 
-### 目標
-yield-bearing stablecoinを活用したポートフォリオ管理プラットフォームのSolanaスマートコントラクト実装
+1. [Project Overview](#project-overview)
+2. [Environment Setup](#environment-setup)
+3. [Architecture Design](#architecture-design)
+4. [Core Function Implementation](#core-function-implementation)
+5. [Security Measures](#security-measures)
+6. [Testing Strategy](#testing-strategy)
+7. [Call Operation Verification Procedures](#call-operation-verification-procedures)
+8. [Deployment](#deployment)
+9. [Client Integration](#client-integration)
+10. [Performance Optimization](#performance-optimization)
+11. [Implementation Roadmap](#implementation-roadmap)
+12. [Summary](#summary)
 
-### 主要機能
-- ユーザーポートフォリオ管理
-- stablecoin配分調整
-- Jupiter統合によるリバランス機能
-- クライアントサイドでのAPY追跡
+---
 
-### 技術スタック
+## Project Overview
+
+### Objectives
+Solana smart contract implementation for a portfolio management platform utilizing yield-bearing stablecoins
+
+### Key Features
+- User portfolio management
+- Stablecoin allocation adjustment
+- Rebalancing functionality via Jupiter integration
+- Client-side APY tracking
+
+### Technology Stack
 - **Anchor Framework**: 0.31.1
 - **Rust**: 1.75+
 - **Solana CLI**: 1.18+
-- **SPL Token 2022**: yield-bearing tokens対応
+- **SPL Token 2022**: Support for yield-bearing tokens
 
 ---
 
@@ -1020,42 +1023,42 @@ describe("パフォーマンステスト", () => {
 
 ---
 
-## 呼び出し動作確認手順
+## Call Operation Verification Procedures
 
-### 1. ローカル環境でのテスト実行
+### 1. Local Environment Testing
 
 ```bash
-# 1. ローカルバリデータ起動
+# 1. Start local validator
 solana-test-validator --reset
 
-# 2. 別ターミナルでテスト実行
+# 2. Run tests in a separate terminal
 cd contract
 anchor test
 ```
 
-### 2. 個別機能のテスト
+### 2. Individual Function Testing
 
 ```bash
-# 特定のテストファイル実行
-anchor test -- --grep "ポートフォリオ初期化"
+# Run specific test file
+anchor test -- --grep "Portfolio Initialization"
 
-# 特定のテストケース実行
-anchor test -- --grep "正常な初期化"
+# Run specific test case
+anchor test -- --grep "Normal initialization"
 
-# ファズテスト実行
+# Run fuzz tests
 anchor test tests/fuzz.ts
 
-# パフォーマンステスト実行
+# Run performance tests
 anchor test tests/performance.ts
 ```
 
-### 3. デバッグ付きテスト実行
+### 3. Testing with Debug Output
 
 ```typescript
 // tests/debug.ts
-describe("デバッグテスト", () => {
-  it("詳細ログ付きポートフォリオ初期化", async () => {
-    console.log("=== ポートフォリオ初期化デバッグ ===");
+describe("Debug Tests", () => {
+  it("Portfolio initialization with detailed logging", async () => {
+    console.log("=== Portfolio Initialization Debug ===");
     
     const initParams = {
       initialAllocations: [
@@ -1067,9 +1070,9 @@ describe("デバッグテスト", () => {
       ],
     };
 
-    console.log("初期化パラメータ:", JSON.stringify(initParams, null, 2));
-    console.log("ポートフォリオPDA:", portfolioPda.toString());
-    console.log("オーナー:", owner.publicKey.toString());
+    console.log("Initialization parameters:", JSON.stringify(initParams, null, 2));
+    console.log("Portfolio PDA:", portfolioPda.toString());
+    console.log("Owner:", owner.publicKey.toString());
 
     const tx = await program.methods
       .initializePortfolio(initParams)
@@ -1080,24 +1083,24 @@ describe("デバッグテスト", () => {
       })
       .rpc();
 
-    console.log("トランザクション署名:", tx);
+    console.log("Transaction signature:", tx);
 
     const portfolio = await program.account.portfolio.fetch(portfolioPda);
-    console.log("作成されたポートフォリオ:", {
+    console.log("Created portfolio:", {
       owner: portfolio.owner.toString(),
       totalValue: portfolio.totalValue.toString(),
       allocationsCount: portfolio.allocations.length,
       createdAt: new Date(portfolio.createdAt.toNumber() * 1000),
     });
 
-    // トランザクション詳細取得
+    // Get transaction details
     const txDetails = await provider.connection.getTransaction(tx);
-    console.log("ガス使用量:", txDetails?.meta?.fee);
-    console.log("ログ出力:", txDetails?.meta?.logMessages);
+    console.log("Gas used:", txDetails?.meta?.fee);
+    console.log("Log output:", txDetails?.meta?.logMessages);
   });
 
-  it("エラーケースのデバッグ", async () => {
-    console.log("=== エラーケースデバッグ ===");
+  it("Error case debugging", async () => {
+    console.log("=== Error Case Debug ===");
     
     const invalidParams = {
       initialAllocations: [
@@ -1119,21 +1122,21 @@ describe("デバッグテスト", () => {
         })
         .rpc();
     } catch (error) {
-      console.log("キャッチされたエラー:", {
+      console.log("Caught error:", {
         message: error.message,
         errorCode: error.error?.errorCode?.code,
         errorMessage: error.error?.errorMessage,
         programLogs: error.logs,
       });
       
-      // エラーが期待されるものかを確認
+      // Verify if error is expected
       expect(error.error.errorCode.code).to.equal("AllocationOverflow");
     }
   });
 });
 ```
 
-### 4. 手動テスト用CLIスクリプト
+### 4. CLI Script for Manual Testing
 
 ```typescript
 // scripts/manual-test.ts
@@ -1146,29 +1149,29 @@ async function manualTest() {
   const program = anchor.workspace.SloomoPortfolio;
   const owner = provider.wallet;
 
-  console.log("=== 手動テスト開始 ===");
-  console.log("プログラムID:", program.programId.toString());
-  console.log("オーナー:", owner.publicKey.toString());
+  console.log("=== Manual Test Start ===");
+  console.log("Program ID:", program.programId.toString());
+  console.log("Owner:", owner.publicKey.toString());
 
-  // 1. ポートフォリオPDA計算
+  // 1. Calculate portfolio PDA
   const [portfolioPda] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("portfolio"), owner.publicKey.toBuffer()],
     program.programId
   );
-  console.log("ポートフォリオPDA:", portfolioPda.toString());
+  console.log("Portfolio PDA:", portfolioPda.toString());
 
-  // 2. 既存ポートフォリオ確認
+  // 2. Check existing portfolio
   try {
     const existingPortfolio = await program.account.portfolio.fetch(portfolioPda);
-    console.log("既存ポートフォリオ発見:", {
+    console.log("Existing portfolio found:", {
       totalValue: existingPortfolio.totalValue.toString(),
       allocationsCount: existingPortfolio.allocations.length,
     });
   } catch (error) {
-    console.log("ポートフォリオが存在しません。新規作成します。");
+    console.log("Portfolio does not exist. Creating new one.");
   }
 
-  // 3. 新規ポートフォリオ作成（存在しない場合）
+  // 3. Create new portfolio (if it doesn't exist)
   const initParams = {
     initialAllocations: [
       {
@@ -1194,14 +1197,14 @@ async function manualTest() {
       })
       .rpc();
     
-    console.log("ポートフォリオ初期化成功:", tx);
+    console.log("Portfolio initialization successful:", tx);
   } catch (error) {
-    console.log("初期化エラー（既に存在する可能性）:", error.message);
+    console.log("Initialization error (may already exist):", error.message);
   }
 
-  // 4. ポートフォリオ状態確認
+  // 4. Check portfolio state
   const portfolio = await program.account.portfolio.fetch(portfolioPda);
-  console.log("現在のポートフォリオ状態:", {
+  console.log("Current portfolio state:", {
     owner: portfolio.owner.toString(),
     totalValue: portfolio.totalValue.toString(),
     lastRebalance: new Date(portfolio.lastRebalance.toNumber() * 1000),
@@ -1212,29 +1215,29 @@ async function manualTest() {
     })),
   });
 
-  console.log("=== 手動テスト完了 ===");
+  console.log("=== Manual Test Complete ===");
 }
 
 manualTest().catch(console.error);
 ```
 
 ```bash
-# スクリプト実行
+# Run script
 cd contract
 yarn ts-node scripts/manual-test.ts
 ```
 
-### 5. リアルタイムログ監視
+### 5. Real-time Log Monitoring
 
 ```bash
-# ローカルバリデータのログ監視
+# Monitor local validator logs
 solana logs
 
-# 特定のプログラムIDのログ監視
+# Monitor logs for specific program ID
 solana logs F4Cq84a2mtt4cH8eKP4bWf4K3td7gHYzjyM1HP7SirdS
 ```
 
-### 6. トランザクション詳細確認
+### 6. Transaction Detail Inspection
 
 ```typescript
 // scripts/tx-inspector.ts
@@ -1245,19 +1248,19 @@ async function inspectTransaction(signature: string) {
     commitment: "confirmed",
   });
 
-  console.log("=== トランザクション詳細 ===");
-  console.log("署名:", signature);
-  console.log("スロット:", tx?.slot);
-  console.log("ブロック時間:", new Date((tx?.blockTime || 0) * 1000));
-  console.log("ガス使用量:", tx?.meta?.fee);
-  console.log("エラー:", tx?.meta?.err);
-  console.log("ログ:");
+  console.log("=== Transaction Details ===");
+  console.log("Signature:", signature);
+  console.log("Slot:", tx?.slot);
+  console.log("Block time:", new Date((tx?.blockTime || 0) * 1000));
+  console.log("Gas used:", tx?.meta?.fee);
+  console.log("Error:", tx?.meta?.err);
+  console.log("Logs:");
   tx?.meta?.logMessages?.forEach((log, i) => {
     console.log(`  ${i}: ${log}`);
   });
 
-  // アカウント変更追跡
-  console.log("アカウント変更:");
+  // Track account changes
+  console.log("Account changes:");
   tx?.meta?.preBalances?.forEach((preBalance, i) => {
     const postBalance = tx.meta?.postBalances?.[i] || 0;
     const change = postBalance - preBalance;
@@ -1267,46 +1270,46 @@ async function inspectTransaction(signature: string) {
   });
 }
 
-// 使用例
+// Usage example
 // inspectTransaction("your-transaction-signature-here");
 ```
 
 ---
 
-## デプロイメント
+## Deployment
 
-### 1. ローカルデプロイ
+### 1. Local Deployment
 
 ```bash
-# ローカルバリデータ起動
+# Start local validator
 solana-test-validator
 
-# プログラムビルド
+# Build program
 anchor build
 
-# テスト実行
+# Run tests
 anchor test
 
-# ローカルデプロイ
+# Local deployment
 anchor deploy
 ```
 
-### 2. Devnetデプロイ
+### 2. Devnet Deployment
 
 ```bash
-# Devnet設定
+# Configure Devnet
 solana config set --url devnet
 solana airdrop 2
 
-# Anchor.toml更新
+# Update Anchor.toml
 [provider]
 cluster = "devnet"
 
-# デプロイ
+# Deploy
 anchor deploy --provider.cluster devnet
 ```
 
-### 3. Mainnetデプロイ準備
+### 3. Mainnet Deployment Preparation
 
 ```toml
 [programs.mainnet]
@@ -1317,7 +1320,7 @@ cluster = "mainnet"
 wallet = "~/.config/solana/mainnet-wallet.json"
 ```
 
-### 4. プログラムアップグレード
+### 4. Program Upgrade
 
 ```rust
 #[account]
@@ -1361,19 +1364,19 @@ pub struct ProgramUpgraded {
 
 ---
 
-## クライアント統合
+## Client Integration
 
-### 1. TypeScript型生成
+### 1. TypeScript Type Generation
 
 ```bash
-# IDL生成
+# Generate IDL
 anchor build --idl
 
-# TypeScript型生成
+# Generate TypeScript types
 npx @coral-xyz/anchor idl fetch -o target/types/sloomo_portfolio.ts F4Cq84a2mtt4cH8eKP4bWf4K3td7gHYzjyM1HP7SirdS
 ```
 
-### 2. React Native統合
+### 2. React Native Integration
 
 ```typescript
 // src/hooks/useSloomoProgram.ts
@@ -1395,7 +1398,7 @@ export function useSloomoProgram() {
       {
         publicKey: selectedAccount.publicKey,
         signTransaction: async (tx) => {
-          // MWA統合
+          // MWA integration
           return await signTransaction(tx);
         },
         signAllTransactions: async (txs) => {
@@ -1416,7 +1419,7 @@ export function useSloomoProgram() {
 }
 ```
 
-### 3. ポートフォリオ操作Hook
+### 3. Portfolio Operations Hook
 
 ```typescript
 // src/hooks/usePortfolio.ts
@@ -1448,7 +1451,7 @@ export function usePortfolio(owner: PublicKey) {
   
   const initializePortfolio = useMutation({
     mutationFn: async (params: InitPortfolioParams) => {
-      if (!program || !portfolioPda) throw new Error("プログラムが準備されていません");
+      if (!program || !portfolioPda) throw new Error("Program not ready");
       
       return await program.methods
         .initializePortfolio(params)
@@ -1468,7 +1471,7 @@ export function usePortfolio(owner: PublicKey) {
   
   const rebalancePortfolio = useMutation({
     mutationFn: async (targetAllocations: AllocationTarget[]) => {
-      if (!program || !portfolioPda) throw new Error("プログラムが準備されていません");
+      if (!program || !portfolioPda) throw new Error("Program not ready");
       
       return await program.methods
         .rebalancePortfolio(targetAllocations)
@@ -1495,7 +1498,7 @@ export function usePortfolio(owner: PublicKey) {
 }
 ```
 
-### 4. エラーハンドリング
+### 4. Error Handling
 
 ```typescript
 // src/utils/anchorErrors.ts
@@ -1505,29 +1508,29 @@ export function parseAnchorError(error: any): string {
     
     switch (errorCode) {
       case "InvalidAllocationPercentage":
-        return "配分比率が無効です";
+        return "Invalid allocation percentage";
       case "InsufficientBalance":
-        return "残高が不足しています";
+        return "Insufficient balance";
       case "AllocationOverflow":
-        return "配分の合計が100%を超えています";
+        return "Total allocation exceeds 100%";
       case "RebalanceTooFrequent":
-        return "リバランスの実行間隔が短すぎます";
+        return "Rebalancing interval too short";
       case "Unauthorized":
-        return "認証されていないアクセスです";
+        return "Unauthorized access";
       case "InvalidTokenMint":
-        return "無効なトークンミントです";
+        return "Invalid token mint";
       case "YieldUpdateTooFrequent":
-        return "利回り更新が頻繁すぎます";
+        return "Yield update too frequent";
       case "MathOverflow":
-        return "数値オーバーフローが発生しました";
+        return "Math overflow occurred";
       case "InvalidApy":
-        return "無効なAPY値です";
+        return "Invalid APY value";
       default:
-        return `プログラムエラー: ${errorCode}`;
+        return `Program error: ${errorCode}`;
     }
   }
   
-  return "不明なエラーが発生しました";
+  return "Unknown error occurred";
 }
 ```
 
@@ -1548,15 +1551,15 @@ pub struct RebalancePortfolio<'info> {
     )]
     pub portfolio: Account<'info, Portfolio>,
     
-    // 必要最小限のアカウントのみ
+    // Only minimum required accounts
 }
 
-// バッチ処理での最適化
+// Batch processing optimization
 pub fn batch_rebalance(
     ctx: Context<BatchRebalance>,
     operations: Vec<RebalanceOperation>,
 ) -> Result<()> {
-    // 単一トランザクションで複数操作を実行
+    // Execute multiple operations in a single transaction
     for operation in operations {
         execute_rebalance_operation(ctx, operation)?;
     }
@@ -1564,7 +1567,7 @@ pub fn batch_rebalance(
 }
 ```
 
-### 2. メモリ最適化
+### 2. Memory Optimization
 
 ```rust
 impl Portfolio {
@@ -1592,27 +1595,27 @@ impl AllocationData {
 
 ---
 
-## 実装ロードマップ
+## Implementation Roadmap
 
-### フェーズ1: MVP (2週間)
-- [x] 基本的なポートフォリオ管理
-- [x] 簡単な配分調整
-- [x] セキュリティ基盤
+### Phase 1: MVP (2 weeks)
+- [x] Basic portfolio management
+- [x] Simple allocation adjustment
+- [x] Security foundation
 
-### フェーズ2: 拡張機能 (4週間)
-- [ ] xStock API統合
-- [ ] 自動リバランス
-- [ ] 利回り追跡
+### Phase 2: Extended Features (4 weeks)
+- [ ] xStock API integration
+- [ ] Automatic rebalancing
+- [ ] Yield tracking
 
-### フェーズ3: 高度な機能 (6週間)
-- [ ] AI最適化
-- [ ] クロスプログラム統合
-- [ ] 高度な分析
+### Phase 3: Advanced Features (6 weeks)
+- [ ] AI optimization
+- [ ] Cross-program integration
+- [ ] Advanced analytics
 
 ---
 
-## まとめ
+## Summary
 
-このドキュメントは、Sloomoプロジェクトのスマートコントラクト実装における完全なガイドを提供します。Anchor/Rustを使用したSolanaプログラム開発のベストプラクティスに従い、セキュリティ、パフォーマンス、保守性を重視した設計となっています。
+This document provides a complete guide for smart contract implementation in the Sloomo project. Following best practices for Solana program development using Anchor/Rust, the design emphasizes security, performance, and maintainability.
 
-実装時は、段階的な開発とテストを心がけ、セキュリティ監査を必ず実施してください。特にテスト戦略と呼び出し動作確認手順を活用して、堅牢なプログラムを構築してください。
+During implementation, focus on incremental development and testing, and always conduct security audits. Utilize the testing strategies and call operation verification procedures to build robust programs.

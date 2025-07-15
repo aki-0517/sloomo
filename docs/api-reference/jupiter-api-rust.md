@@ -1,44 +1,44 @@
-# Jupiter API リファレンス (Rust実装)
+# Jupiter API Reference (Rust Implementation)
 
-## 概要
+## Overview
 
-Jupiter APIは、Solanaブロックチェーン上でのトークンスワップを効率的に実行するためのAPIです。このドキュメントでは、Rustでの実装方法を含むAPI仕様について説明します。
+Jupiter API is an API for efficiently executing token swaps on the Solana blockchain. This document describes the API specifications including implementation methods in Rust.
 
-> **注意**: ユーザーガイドはStationから新しいサポートシステムに移行されました。最新のガイドについては[Jupiter Helpdesk](https://docs.jup.ag/)をご覧ください。
+> **Note**: User guides have been migrated from Station to a new support system. Please see [Jupiter Helpdesk](https://docs.jup.ag/) for the latest guides.
 
-## Swap API スキーマ
+## Swap API Schema
 
-### 1. Quote（見積もり取得）
+### 1. Quote (Get Quote)
 
-#### エンドポイント
+#### Endpoint
 ```
 GET https://lite-api.jup.ag/swap/v1/quote
 ```
 
-#### 説明
-POST /swapで使用する見積もりを取得するためのエンドポイントです。
+#### Description
+Endpoint to get quotes for use with POST /swap.
 
-> **参考**: 詳細については[Swap API ドキュメント](https://docs.jup.ag/apis/swap-api)を参照してください。
+> **Reference**: For more details, see [Swap API Documentation](https://docs.jup.ag/apis/swap-api).
 
-#### リクエストパラメータ
+#### Request Parameters
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 |---|---|---|---|
-| `inputMint` | string | ✓ | 入力トークンのミントアドレス |
-| `outputMint` | string | ✓ | 出力トークンのミントアドレス |
-| `amount` | uint64 | ✓ | スワップする生の金額（小数点前）<br>- SwapMode=ExactInの場合: 入力金額<br>- SwapMode=ExactOutの場合: 出力金額 |
-| `slippageBps` | uint16 |  | スリッページ（ベーシスポイント） |
-| `swapMode` | string |  | 可能な値: `[ExactIn, ExactOut]`<br>- ExactOut: 正確な出力金額が必要な場合（支払いサービスとしてのSwap API使用など）<br>- ExactInの場合: 出力トークンにスリッページが適用<br>- ExactOutの場合: 入力トークンにスリッページが適用<br>- すべてのAMMがExactOutをサポートしているわけではありません（現在はOrca Whirlpool、Raydium CLMM、Raydium CPMMのみ）<br>- デフォルト値: `ExactIn` |
-| `dexes` | string[] |  | 複数のDEXをカンマ区切りで指定可能<br>例: `dexes=Raydium,Orca+V2,Meteora+DLMM`<br>指定された場合、そのDEXのみを使用してルーティング<br>[DEXの完全リスト](https://docs.jup.ag/docs/apis/swap-api#dexes) |
-| `excludeDexes` | string[] |  | 複数のDEXをカンマ区切りで指定可能<br>例: `excludeDexes=Raydium,Orca+V2,Meteora+DLMM`<br>指定された場合、そのDEXを除外してルーティング<br>[DEXの完全リスト](https://docs.jup.ag/docs/apis/swap-api#dexes) |
-| `restrictIntermediateTokens` | boolean |  | ルート内の中間トークンをより安定したトークンのセットに制限<br>高スリッページルートへの露出を減らすのに役立ちます<br>デフォルト値: `true` |
-| `onlyDirectRoutes` | boolean |  | Jupiterのルーティングを単一ホップルートのみに制限<br>結果として悪いルートになる可能性があります<br>デフォルト値: `false` |
-| `asLegacyTransaction` | boolean |  | バージョン付きトランザクションの代わりにレガシートランザクションを使用<br>デフォルト値: `false` |
-| `platformFeeBps` | uint16 |  | ベーシスポイントでの手数料徴収<br>/swapのfeeAccountと併用、[手数料追加ガイド](https://docs.jup.ag/docs/apis/adding-fees)参照 |
-| `maxAccounts` | uint64 |  | 見積もりに使用される最大アカウント数の概算<br>独自のトランザクションを構成する場合や、より良いルートのためのリソース計算をより正確に行う場合に有用<br>デフォルト値: `64` |
-| `dynamicSlippage` | boolean |  | trueの場合、slippageBpsはDynamic Slippageの推定値で上書きされます<br>値は/swapエンドポイントで返されます<br>デフォルト値: `false` |
+| `inputMint` | string | ✓ | Input token mint address |
+| `outputMint` | string | ✓ | Output token mint address |
+| `amount` | uint64 | ✓ | Raw amount to swap (before decimal places)<br>- For SwapMode=ExactIn: input amount<br>- For SwapMode=ExactOut: output amount |
+| `slippageBps` | uint16 |  | Slippage (basis points) |
+| `swapMode` | string |  | Possible values: `[ExactIn, ExactOut]`<br>- ExactOut: when exact output amount is needed (e.g., using Swap API as a payment service)<br>- ExactIn: slippage applied to output token<br>- ExactOut: slippage applied to input token<br>- Not all AMMs support ExactOut (currently only Orca Whirlpool, Raydium CLMM, Raydium CPMM)<br>- Default value: `ExactIn` |
+| `dexes` | string[] |  | Multiple DEXes can be specified comma-separated<br>Example: `dexes=Raydium,Orca+V2,Meteora+DLMM`<br>If specified, routing will use only those DEXes<br>[Complete list of DEXes](https://docs.jup.ag/docs/apis/swap-api#dexes) |
+| `excludeDexes` | string[] |  | Multiple DEXes can be specified comma-separated<br>Example: `excludeDexes=Raydium,Orca+V2,Meteora+DLMM`<br>If specified, routing will exclude those DEXes<br>[Complete list of DEXes](https://docs.jup.ag/docs/apis/swap-api#dexes) |
+| `restrictIntermediateTokens` | boolean |  | Restrict intermediate tokens in route to a more stable set of tokens<br>Helps reduce exposure to high slippage routes<br>Default value: `true` |
+| `onlyDirectRoutes` | boolean |  | Restrict Jupiter routing to single-hop routes only<br>May result in worse routes<br>Default value: `false` |
+| `asLegacyTransaction` | boolean |  | Use legacy transaction instead of versioned transaction<br>Default value: `false` |
+| `platformFeeBps` | uint16 |  | Fee collection in basis points<br>Used in conjunction with feeAccount in /swap, see [Fee Addition Guide](https://docs.jup.ag/docs/apis/adding-fees) |
+| `maxAccounts` | uint64 |  | Rough estimate of maximum number of accounts used in quote<br>Useful when composing your own transaction or doing more accurate resource calculation for better routes<br>Default value: `64` |
+| `dynamicSlippage` | boolean |  | If true, slippageBps will be overridden with Dynamic Slippage estimation<br>Value will be returned in /swap endpoint<br>Default value: `false` |
 
-#### レスポンス（200 成功）
+#### Response (200 Success)
 
 ```json
 {
@@ -57,7 +57,7 @@ POST /swapで使用する見積もりを取得するためのエンドポイン�
 }
 ```
 
-#### Rust実装例
+#### Rust Implementation Example
 
 ```rust
 #[tokio::main]
@@ -80,39 +80,39 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### 2. Swap（スワップ実行）
+### 2. Swap (Execute Swap)
 
-#### エンドポイント
+#### Endpoint
 ```
 POST https://lite-api.jup.ag/swap/v1/swap
 ```
 
-#### 説明
-/quoteのレスポンスに基づいてbase64エンコードされた未署名スワップトランザクションを要求します。
+#### Description
+Request a base64-encoded unsigned swap transaction based on the response from /quote.
 
-> **参考**: 詳細については[Swap API ドキュメント](https://docs.jup.ag/apis/swap-api)を参照してください。
+> **Reference**: For more details, see [Swap API Documentation](https://docs.jup.ag/apis/swap-api).
 
-#### リクエストボディ（application/json）
+#### Request Body (application/json)
 
-| パラメータ | 型 | 必須 | 説明 |
+| Parameter | Type | Required | Description |
 |---|---|---|---|
-| `userPublicKey` | string | ✓ | ユーザーの公開鍵 |
-| `payer` | string |  | トランザクション手数料とトークンアカウントのレントを支払うカスタムペイヤー<br>ユーザーは他の場所でATAを閉じて再度開くことができるため、手数料はこれを考慮する必要があります |
-| `wrapAndUnwrapSol` | boolean |  | SOLをトランザクション内で自動的にラップ/アンラップ<br>- true: SOL金額を厳密に使用してラップし、スワップ後にすべてのWSOLをSOLに戻します<br>- false: WSOL金額を厳密に使用してスワップし、スワップ後にWSOLをSOLに戻しません<br>- falseに設定するには、WSOLトークンアカウントが初期化されている必要があります<br>- destinationTokenAccountが設定されている場合は無視されます<br>デフォルト値: `true` |
-| `useSharedAccounts` | boolean |  | 共有プログラムアカウントの使用を有効化<br>複雑なルーティングでは複数の中間トークンアカウントが必要で、ユーザーが持っていない可能性があるため重要<br>trueの場合、ユーザー用の中間トークンアカウントの作成を処理する必要はありません<br>新しいAMM（低流動性トークン）では共有アカウントルートが失敗する可能性があります |
-| `feeAccount` | string |  | 手数料の徴収に使用されるトークンアカウント<br>トークンアカウントのミントはスワップの入力または出力ミントのいずれかである必要があります<br>リファラルプログラムの使用は不要になりました<br>[手数料追加ガイド](https://docs.jup.ag/docs/apis/adding-fees)参照 |
-| `trackingAccount` | string |  | トランザクションを追跡するための任意の公開鍵<br>インテグレーターが公開鍵からすべてのスワップトランザクションを取得するのに有用<br>Solscan/SolanaFMなどのブロックエクスプローラーまたはDune/Flipsideなどでデータをクエリ |
-| `prioritizationFeeLamports` | object |  | 優先度手数料の設定 |
-| `asLegacyTransaction` | boolean |  | デフォルトのバージョン付きトランザクションではなくレガシートランザクションを構築<br>/quoteのasLegacyTransactionと併用、そうでなければトランザクションが大きすぎる可能性があります<br>デフォルト値: `false` |
-| `destinationTokenAccount` | string |  | スワップの出力トークンを受け取るトークンアカウントの公開鍵<br>提供されない場合、署名者のトークンアカウントが使用されます<br>提供された場合、トークンアカウントは既に初期化されているものと想定されます |
-| `dynamicComputeUnitLimit` | boolean |  | 有効化すると、スワップシミュレーションを実行して使用されるコンピュートユニットを取得し、ComputeBudgetのコンピュートユニット制限に設定<br>これにより、シミュレーションのための追加のRPC呼び出しが発生します<br>コンピュートユニットを正確に推定し、必要な優先度手数料を削減するか、ブロックに含まれる可能性を高めるために有効化することを推奨<br>デフォルト値: `false` |
-| `skipUserAccountsRpcCalls` | boolean |  | 有効化すると、必要なアカウントをチェックするための追加のRPC呼び出しを行いません<br>SOLのラップ/アンラップや宛先アカウントの作成など、トランザクションに必要なすべてのアカウントが既に設定されている場合のみ有効化<br>デフォルト値: `false` |
-| `dynamicSlippage` | boolean |  | 有効化すると、スリッページを推定し、スワップトランザクションに直接適用し、クォートレスポンスのslippageBpsパラメータを上書きします<br>/quoteのdynamicSlippageと併用、そうでなければ/quoteのslippageBpsが使用されます<br>デフォルト値: `false` |
-| `computeUnitPriceMicroLamports` | uint64 |  | 優先度手数料の計算に正確なコンピュートユニット価格を使用<br>computeUnitLimit (1400000) * computeUnitPriceMicroLamports<br>独自のコンピュートユニット価格を渡すのではなく、prioritizationFeeLamportsとdynamicComputeUnitLimitの使用を推奨 |
-| `blockhashSlotsToExpiry` | uint8 |  | トランザクションを有効にしたいスロット数<br>例: 10スロットを渡すと、トランザクションは約400ms * 10 = 約4秒間有効 |
-| `quoteResponse` | object | ✓ | /quoteからのレスポンスオブジェクト |
+| `userPublicKey` | string | ✓ | User's public key |
+| `payer` | string |  | Custom payer to pay for transaction fees and token account rent<br>Since users can close and reopen ATAs elsewhere, fees should account for this |
+| `wrapAndUnwrapSol` | boolean |  | Automatically wrap/unwrap SOL within the transaction<br>- true: Use exact SOL amount for wrapping and unwrap all WSOL back to SOL after swap<br>- false: Use exact WSOL amount for swap and don't unwrap WSOL back to SOL after swap<br>- Setting to false requires WSOL token account to be initialized<br>- Ignored if destinationTokenAccount is set<br>Default value: `true` |
+| `useSharedAccounts` | boolean |  | Enable use of shared program accounts<br>Important as complex routing may require multiple intermediate token accounts which users may not have<br>If true, you don't need to handle creation of intermediate token accounts for users<br>Shared account routes may fail for new AMMs (low liquidity tokens) |
+| `feeAccount` | string |  | Token account used for fee collection<br>Token account mint must be either input or output mint of the swap<br>Referral program usage is no longer required<br>See [Fee Addition Guide](https://docs.jup.ag/docs/apis/adding-fees) |
+| `trackingAccount` | string |  | Optional public key for tracking transactions<br>Useful for integrators to retrieve all swap transactions from a public key<br>Query data in block explorers like Solscan/SolanaFM or Dune/Flipside |
+| `prioritizationFeeLamports` | object |  | Priority fee settings |
+| `asLegacyTransaction` | boolean |  | Build legacy transaction instead of default versioned transaction<br>Use with asLegacyTransaction in /quote, otherwise transaction may be too large<br>Default value: `false` |
+| `destinationTokenAccount` | string |  | Public key of token account to receive output tokens from swap<br>If not provided, signer's token account will be used<br>If provided, token account is assumed to be already initialized |
+| `dynamicComputeUnitLimit` | boolean |  | When enabled, performs swap simulation to get compute units used and sets it to ComputeBudget compute unit limit<br>This incurs additional RPC calls for simulation<br>Recommended to enable for accurate compute unit estimation and to reduce required priority fees or increase likelihood of being included in blocks<br>Default value: `false` |
+| `skipUserAccountsRpcCalls` | boolean |  | When enabled, doesn't make additional RPC calls to check required accounts<br>Only enable if all accounts required for transaction are already set up, such as SOL wrap/unwrap or destination account creation<br>Default value: `false` |
+| `dynamicSlippage` | boolean |  | When enabled, estimates slippage and applies it directly to swap transaction, overriding slippageBps parameter in quote response<br>Use with dynamicSlippage in /quote, otherwise slippageBps from /quote will be used<br>Default value: `false` |
+| `computeUnitPriceMicroLamports` | uint64 |  | Use exact compute unit price for priority fee calculation<br>computeUnitLimit (1400000) * computeUnitPriceMicroLamports<br>Recommended to use prioritizationFeeLamports and dynamicComputeUnitLimit instead of passing your own compute unit price |
+| `blockhashSlotsToExpiry` | uint8 |  | Number of slots you want the transaction to be valid for<br>Example: passing 10 slots means transaction will be valid for approximately 400ms * 10 = ~4 seconds |
+| `quoteResponse` | object | ✓ | Response object from /quote |
 
-#### レスポンス（200 成功）
+#### Response (200 Success)
 
 ```json
 {
@@ -122,7 +122,7 @@ POST https://lite-api.jup.ag/swap/v1/swap
 }
 ```
 
-#### Rust実装例
+#### Rust Implementation Example
 
 ```rust
 #[tokio::main]
@@ -186,22 +186,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### 3. Swap Instructions（スワップ命令）
+### 3. Swap Instructions (Swap Instructions)
 
-#### エンドポイント
+#### Endpoint
 ```
 POST https://lite-api.jup.ag/swap/v1/swap-instructions
 ```
 
-#### 説明
-/quoteから取得したクォートを使用できるスワップ命令を要求します。
+#### Description
+Request swap instructions that can use quotes obtained from /quote.
 
-> **参考**: 詳細については[Swap API ドキュメント](https://docs.jup.ag/apis/swap-api)を参照してください。
+> **Reference**: For more details, see [Swap API Documentation](https://docs.jup.ag/apis/swap-api).
 
-#### リクエストボディ
-swapエンドポイントと同様のパラメータ構造です。
+#### Request Body
+Similar parameter structure as the swap endpoint.
 
-#### レスポンス（200 成功）
+#### Response (200 Success)
 
 ```json
 {
@@ -214,7 +214,7 @@ swapエンドポイントと同様のパラメータ構造です。
 }
 ```
 
-#### Rust実装例
+#### Rust Implementation Example
 
 ```rust
 #[tokio::main]
@@ -278,17 +278,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### 4. Program ID to Label（プログラムIDからラベルへの変換）
+### 4. Program ID to Label (Program ID to Label Conversion)
 
-#### エンドポイント
+#### Endpoint
 ```
 GET https://lite-api.jup.ag/swap/v1/program-id-to-label
 ```
 
-#### 説明
-プログラムIDをキーとし、ラベルを値とするハッシュを返します。これは、障害のあるプログラムIDを特定することでトランザクションからのエラーをマッピングするのに使用されます。excludeDexesまたはdexesパラメータと併用できます。
+#### Description
+Returns a hash with program ID as key and label as value. This is used to map errors from transactions by identifying the problematic program ID. Can be used in conjunction with excludeDexes or dexes parameters.
 
-#### レスポンス（200 デフォルトレスポンス）
+#### Response (200 Default Response)
 
 ```json
 {
@@ -296,7 +296,7 @@ GET https://lite-api.jup.ag/swap/v1/program-id-to-label
 }
 ```
 
-#### Rust実装例
+#### Rust Implementation Example
 
 ```rust
 #[tokio::main]
@@ -319,18 +319,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-## その他のAPI スキーマ
+## Other API Schemas
 
-- **Ultra API スキーマ**: 高度なルーティング機能
-- **Trigger API スキーマ**: 条件付きスワップ機能
-- **Recurring API スキーマ**: 定期的なスワップ機能
-- **Token API スキーマ**: トークン情報取得
-- **Price API スキーマ**: 価格情報取得
+- **Ultra API Schema**: Advanced routing capabilities
+- **Trigger API Schema**: Conditional swap functionality
+- **Recurring API Schema**: Recurring swap functionality
+- **Token API Schema**: Token information retrieval
+- **Price API Schema**: Price information retrieval
 
-## 関連リンク
+## Related Links
 
-- [Jupiter開発者ドキュメント](https://docs.jup.ag/)
+- [Jupiter Developer Documentation](https://docs.jup.ag/)
 - [Jupiter Helpdesk](https://docs.jup.ag/)
-- [API ステータス](https://status.jup.ag/)
-- [手数料追加ガイド](https://docs.jup.ag/docs/apis/adding-fees)
-- [DEXリスト](https://docs.jup.ag/docs/apis/swap-api#dexes)
+- [API Status](https://status.jup.ag/)
+- [Fee Addition Guide](https://docs.jup.ag/docs/apis/adding-fees)
+- [DEX List](https://docs.jup.ag/docs/apis/swap-api#dexes)

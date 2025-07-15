@@ -1,33 +1,33 @@
-# Devnet CLI 操作ガイド
+# Devnet CLI Operation Guide
 
-## 概要
+## Overview
 
-このドキュメントでは、Sloomo Portfolio スマートコントラクトをdevnet環境でターミナルから直接操作する方法を説明します。USDCとSOLの両方の投資に対応しています。
+This document explains how to directly operate the Sloomo Portfolio smart contract in the devnet environment from the terminal. Supports both USDC and SOL investments.
 
-## 基本情報
+## Basic Information
 
-### コントラクト情報
-- **プログラムID**: `EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC`
-- **ネットワーク**: Solana Devnet
-- **RPC エンドポイント**: `https://api.devnet.solana.com`
+### Contract Information
+- **Program ID**: `EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC`
+- **Network**: Solana Devnet
+- **RPC Endpoint**: `https://api.devnet.solana.com`
 
-### 必要なツール
+### Required Tools
 - Solana CLI
 - Anchor CLI
 - Node.js & yarn
 
-## 環境設定
+## Environment Setup
 
-### 1. Solana CLI設定
+### 1. Solana CLI Setup
 
 ```bash
-# devnetに切り替え
+# Switch to devnet
 solana config set --url devnet
 
-# ウォレット設定確認
+# Check wallet settings
 solana config get
 
-# 現在の設定表示
+# Show current settings
 Config File: ~/.config/solana/cli/config.yml
 RPC URL: https://api.devnet.solana.com
 WebSocket URL: wss://api.devnet.solana.com/
@@ -35,43 +35,43 @@ Keypair Path: ~/.config/solana/id.json
 Commitment: confirmed
 ```
 
-### 2. ウォレット準備
+### 2. Prepare Wallet
 
 ```bash
-# 新しいウォレットを作成（必要に応じて）
+# Create a new wallet (if needed)
 solana-keygen new --outfile ~/.config/solana/id.json
 
-# 公開鍵確認
+# Check public key
 solana address
 
-# 残高確認
+# Check balance
 solana balance
 
-# devnet SOLを取得
+# Get devnet SOL
 solana airdrop 5
 ```
 
-### 3. プロジェクト環境設定
+### 3. Project Environment Setup
 
 ```bash
-# プロジェクトディレクトリに移動
+# Move to project directory
 cd /path/to/sloomo/contract
 
-# 依存関係インストール
+# Install dependencies
 yarn install
 
-# コントラクトビルド
+# Build contract
 anchor build
 
-# IDL生成確認
+# Check IDL generation
 ls -la target/idl/sloomo_portfolio.json
 ```
 
-## 主要機能の呼び出し方法
+## How to Call Main Functions
 
-### 1. ポートフォリオ初期化
+### 1. Initialize Portfolio
 
-#### TypeScript での実行
+#### Run in TypeScript
 
 ```typescript
 // scripts/initialize_portfolio.ts
@@ -79,20 +79,20 @@ import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 
 async function initializePortfolio() {
-  // プロバイダー設定
+  // Set provider
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   
   const program = anchor.workspace.SloomoPortfolio;
   const user = provider.wallet;
 
-  // Portfolio PDA生成
+  // Generate Portfolio PDA
   const [portfolioPda] = await PublicKey.findProgramAddress(
     [Buffer.from("portfolio"), user.publicKey.toBuffer()],
     program.programId
   );
 
-  // 初期配分設定
+  // Set initial allocations
   const initialAllocations = [
     {
       mint: new PublicKey("So11111111111111111111111111111111111111112"), // WSOL
@@ -106,7 +106,7 @@ async function initializePortfolio() {
     },
   ];
 
-  // ポートフォリオ初期化実行
+  // Execute portfolio initialization
   const tx = await program.methods
     .initializePortfolio({ initialAllocations })
     .accounts({
@@ -116,38 +116,38 @@ async function initializePortfolio() {
     })
     .rpc();
 
-  console.log("ポートフォリオ初期化完了:", tx);
+  console.log("Portfolio initialization complete:", tx);
   console.log("Portfolio PDA:", portfolioPda.toString());
 }
 
 initializePortfolio().catch(console.error);
 ```
 
-#### 実行コマンド
+#### Run Command
 
 ```bash
-# スクリプト実行
+# Run script
 ANCHOR_PROVIDER_URL=https://api.devnet.solana.com \
 ANCHOR_WALLET=~/.config/solana/id.json \
 yarn run ts-node scripts/initialize_portfolio.ts
 ```
 
-### 2. トークン Deposit (USDC/SOL)
+### 2. Token Deposit (USDC/SOL)
 
-#### コマンドライン引数での実行
+#### Run with Command Line Arguments
 
 ```bash
-# USDC投資
+# USDC investment
 yarn portfolio:deposit 100 USDC
 
-# SOL投資
+# SOL investment
 yarn portfolio:deposit 1 SOL
 
-# デフォルト（USDC）
+# Default (USDC)
 yarn portfolio:deposit 100
 ```
 
-#### TypeScript での実行
+#### Run in TypeScript
 
 ```typescript
 // scripts/deposit_token.ts
@@ -162,7 +162,7 @@ async function depositToken(amount?: number, tokenType: 'USDC' | 'SOL' = 'USDC')
   const program = anchor.workspace.SloomoPortfolio;
   const user = provider.wallet;
 
-  // Portfolio PDA取得
+  // Get Portfolio PDA
   const [portfolioPda] = await PublicKey.findProgramAddress(
     [Buffer.from("portfolio"), user.publicKey.toBuffer()],
     program.programId
@@ -176,7 +176,7 @@ async function depositToken(amount?: number, tokenType: 'USDC' | 'SOL' = 'USDC')
 }
 
 async function depositUsdc(program: any, user: any, portfolioPda: PublicKey, amount?: number) {
-  // USDC設定
+  // USDC settings
   const usdcMint = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
   const userUsdcAccount = await getAssociatedTokenAddress(usdcMint, user.publicKey);
   
@@ -186,12 +186,12 @@ async function depositUsdc(program: any, user: any, portfolioPda: PublicKey, amo
     program.programId
   );
 
-  // 投資金額設定（引数で指定されない場合は残高の半分）
+  // Set investment amount (if not specified, use half of balance)
   const userBalance = await program.provider.connection.getTokenAccountBalance(userUsdcAccount);
   const depositAmount = amount || Math.floor((userBalance.value.uiAmount || 0) * 0.5);
   const depositAmountLamports = Math.floor(depositAmount * 1_000_000);
 
-  // USDC deposit実行
+  // Execute USDC deposit
   const tx = await program.methods
     .depositUsdc(new anchor.BN(depositAmountLamports))
     .accounts({
@@ -206,31 +206,31 @@ async function depositUsdc(program: any, user: any, portfolioPda: PublicKey, amo
     })
     .rpc();
 
-  console.log("USDC deposit完了:", tx);
+  console.log("USDC deposit complete:", tx);
 }
 
 async function depositSol(program: any, user: any, portfolioPda: PublicKey, amount?: number) {
   // wrapped SOL (wSOL) mint address
   const wsolMint = new PublicKey("So11111111111111111111111111111111111111112");
   
-  // SOL残高確認
+  // Check SOL balance
   const userBalance = await program.provider.connection.getBalance(user.publicKey);
   const userBalanceSol = userBalance / LAMPORTS_PER_SOL;
   
-  // 投資金額設定（引数で指定されない場合は残高の半分、手数料分を除く）
+  // Set investment amount (if not specified, use half of balance minus fee)
   const depositAmount = amount || Math.floor((userBalanceSol - 0.01) * 0.5 * 100) / 100;
   const depositAmountLamports = Math.floor(depositAmount * LAMPORTS_PER_SOL);
 
-  // ユーザーのwSOLトークンアカウント取得
+  // Get user's wSOL token account
   const userWsolAccount = await getAssociatedTokenAddress(wsolMint, user.publicKey);
   
-  // ポートフォリオのwSOLボルト PDA取得
+  // Get portfolio's wSOL vault PDA
   const [portfolioWsolVault] = await PublicKey.findProgramAddress(
     [Buffer.from("vault"), portfolioPda.toBuffer(), wsolMint.toBuffer()],
     program.programId
   );
 
-  // SOL投資実行（wSOLとして既存のdeposit_usdcメソッドを使用）
+  // Execute SOL investment (use existing deposit_usdc method as wSOL)
   const tx = await program.methods
     .depositUsdc(new anchor.BN(depositAmountLamports))
     .accounts({
@@ -245,10 +245,10 @@ async function depositSol(program: any, user: any, portfolioPda: PublicKey, amou
     })
     .rpc();
 
-  console.log("SOL deposit完了:", tx);
+  console.log("SOL deposit complete:", tx);
 }
 
-// コマンドライン引数解析
+// Parse command line arguments
 function parseArgs() {
   const args = process.argv.slice(2);
   const amount = args[0] ? parseFloat(args[0]) : undefined;
@@ -256,16 +256,16 @@ function parseArgs() {
   return { amount, tokenType: tokenType || 'USDC' };
 }
 
-// 実行
+// Execute
 if (require.main === module) {
   const { amount, tokenType } = parseArgs();
   depositToken(amount, tokenType).catch(console.error);
 }
 ```
 
-### 3. アロケーション追加/編集
+### 3. Add/Edit Allocation
 
-#### TypeScript での実行
+#### Run in TypeScript
 
 ```typescript
 // scripts/add_allocation.ts
@@ -279,13 +279,13 @@ async function addAllocation() {
   const program = anchor.workspace.SloomoPortfolio;
   const user = provider.wallet;
 
-  // Portfolio PDA取得
+  // Get Portfolio PDA
   const [portfolioPda] = await PublicKey.findProgramAddress(
     [Buffer.from("portfolio"), user.publicKey.toBuffer()],
     program.programId
   );
 
-  // アロケーション追加
+  // Add allocation
   const tx = await program.methods
     .addOrUpdateAllocation(
       new PublicKey("So11111111111111111111111111111111111111112"), // SOL
@@ -298,15 +298,15 @@ async function addAllocation() {
     })
     .rpc();
 
-  console.log("アロケーション追加完了:", tx);
+  console.log("Allocation addition complete:", tx);
 }
 
 addAllocation().catch(console.error);
 ```
 
-### 4. リバランス実行
+### 4. Execute Rebalance
 
-#### TypeScript での実行
+#### Run in TypeScript
 
 ```typescript
 // scripts/jupiter_rebalance.ts
@@ -321,20 +321,20 @@ async function jupiterRebalance() {
   const program = anchor.workspace.SloomoPortfolio;
   const user = provider.wallet;
 
-  // Portfolio PDA取得
+  // Get Portfolio PDA
   const [portfolioPda] = await PublicKey.findProgramAddress(
     [Buffer.from("portfolio"), user.publicKey.toBuffer()],
     program.programId
   );
 
-  // USDC設定
+  // USDC settings
   const usdcMint = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
   const usdcTokenAccount = await getAssociatedTokenAddress(
     usdcMint,
     user.publicKey
   );
 
-  // 目標配分設定
+  // Set target allocations
   const targetAllocations = [
     {
       mint: new PublicKey("So11111111111111111111111111111111111111112"),
@@ -346,7 +346,7 @@ async function jupiterRebalance() {
     },
   ];
 
-  // リバランス実行
+  // Execute rebalance
   const tx = await program.methods
     .realJupiterRebalance(targetAllocations, 50) // 0.5% slippage
     .accounts({
@@ -359,15 +359,15 @@ async function jupiterRebalance() {
     })
     .rpc();
 
-  console.log("Jupiterリバランス完了:", tx);
+  console.log("Jupiter rebalance complete:", tx);
 }
 
 jupiterRebalance().catch(console.error);
 ```
 
-### 4. ポートフォリオ状態確認
+### 4. Check Portfolio State
 
-#### TypeScript での実行
+#### Run in TypeScript
 
 ```typescript
 // scripts/check_portfolio.ts
@@ -381,72 +381,72 @@ async function checkPortfolio() {
   const program = anchor.workspace.SloomoPortfolio;
   const user = provider.wallet;
 
-  // Portfolio PDA取得
+  // Get Portfolio PDA
   const [portfolioPda] = await PublicKey.findProgramAddress(
     [Buffer.from("portfolio"), user.publicKey.toBuffer()],
     program.programId
   );
 
   try {
-    // ポートフォリオデータ取得
+    // Get portfolio data
     const portfolioData = await program.account.portfolio.fetch(portfolioPda);
 
-    console.log("=== ポートフォリオ情報 ===");
-    console.log("所有者:", portfolioData.owner.toString());
-    console.log("総価値:", portfolioData.totalValue.toString());
-    console.log("最後のリバランス:", new Date(portfolioData.lastRebalance.toNumber() * 1000));
-    console.log("リバランス中:", portfolioData.isRebalancing);
+    console.log("=== Portfolio Info ===");
+    console.log("Owner:", portfolioData.owner.toString());
+    console.log("Total Value:", portfolioData.totalValue.toString());
+    console.log("Last Rebalance:", new Date(portfolioData.lastRebalance.toNumber() * 1000));
+    console.log("Is Rebalancing:", portfolioData.isRebalancing);
     
-    console.log("\n=== 配分情報 ===");
+    console.log("\n=== Allocation Info ===");
     portfolioData.allocations.forEach((allocation, index) => {
       console.log(`${index + 1}. ${allocation.symbol}`);
-      console.log(`   ミント: ${allocation.mint.toString()}`);
-      console.log(`   現在額: ${allocation.currentAmount.toString()}`);
-      console.log(`   目標比率: ${allocation.targetPercentage / 100}%`);
+      console.log(`   Mint: ${allocation.mint.toString()}`);
+      console.log(`   Current Amount: ${allocation.currentAmount.toString()}`);
+      console.log(`   Target Ratio: ${allocation.targetPercentage / 100}%`);
       console.log(`   APY: ${allocation.apy / 100}%`);
       console.log("");
     });
 
-    console.log("=== パフォーマンス履歴 ===");
-    console.log("履歴数:", portfolioData.performanceHistory.length);
+    console.log("=== Performance History ===");
+    console.log("History Count:", portfolioData.performanceHistory.length);
     
     if (portfolioData.performanceHistory.length > 0) {
       const latest = portfolioData.performanceHistory[portfolioData.performanceHistory.length - 1];
-      console.log("最新の記録:");
-      console.log(`  時刻: ${new Date(latest.timestamp.toNumber() * 1000)}`);
-      console.log(`  価値: ${latest.totalValue.toString()}`);
-      console.log(`  成長率: ${latest.growthRate / 100}%`);
+      console.log("Latest Record:");
+      console.log(`  Time: ${new Date(latest.timestamp.toNumber() * 1000)}`);
+      console.log(`  Value: ${latest.totalValue.toString()}`);
+      console.log(`  Growth Rate: ${latest.growthRate / 100}%`);
     }
 
   } catch (error) {
-    console.error("ポートフォリオが見つかりません:", error.message);
-    console.log("まず initialize_portfolio を実行してください");
+    console.error("Portfolio not found:", error.message);
+    console.log("Please run initialize_portfolio first");
   }
 }
 
 checkPortfolio().catch(console.error);
 ```
 
-### 5. 残高確認
+### 5. Check Balance
 
-#### USDC残高確認
+#### Check USDC Balance
 
 ```bash
-# USDC残高・ボルト確認
+# Check USDC balance and vault
 yarn portfolio:check-usdc
 ```
 
-#### SOL残高確認
+#### Check SOL Balance
 
 ```bash
-# SOL残高・wSOLボルト確認
+# Check SOL balance and wSOL vault
 yarn portfolio:check-sol
 ```
 
-#### TypeScript での実行
+#### Run in TypeScript
 
 ```typescript
-// scripts/check_usdc.ts - USDC残高確認
+// scripts/check_usdc.ts - Check USDC balance
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { getAssociatedTokenAddress } from "@solana/spl-token";
@@ -458,27 +458,27 @@ async function checkUsdc() {
   const program = anchor.workspace.SloomoPortfolio;
   const user = provider.wallet;
 
-  // Portfolio PDA取得
+  // Get Portfolio PDA
   const [portfolioPda] = await PublicKey.findProgramAddress(
     [Buffer.from("portfolio"), user.publicKey.toBuffer()],
     program.programId
   );
 
-  // USDC設定
+  // USDC settings
   const usdcMint = new PublicKey("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
   const userUsdcAccount = await getAssociatedTokenAddress(usdcMint, user.publicKey);
   
-  // ユーザーUSDC残高確認
+  // Check user USDC balance
   try {
     const userUsdcAccountInfo = await program.provider.connection.getTokenAccountBalance(userUsdcAccount);
-    console.log("USDC残高:", userUsdcAccountInfo.value.uiAmount || 0, "USDC");
+    console.log("USDC balance:", userUsdcAccountInfo.value.uiAmount || 0, "USDC");
   } catch (error) {
-    console.log("USDCアカウントが見つかりません");
-    console.log("devnet faucetからUSDCを取得してください: https://spl-token-faucet.com/");
+    console.log("USDC account not found");
+    console.log("Get USDC from devnet faucet: https://spl-token-faucet.com/");
   }
 }
 
-// scripts/check_sol.ts - SOL残高確認
+// scripts/check_sol.ts - Check SOL balance
 import { LAMPORTS_PER_SOL, NATIVE_MINT } from "@solana/web3.js";
 
 async function checkSol() {
@@ -488,29 +488,29 @@ async function checkSol() {
   const program = anchor.workspace.SloomoPortfolio;
   const user = provider.wallet;
 
-  // ネイティブSOL残高
+  // Native SOL balance
   const solBalance = await program.provider.connection.getBalance(user.publicKey);
   const solBalanceFormatted = solBalance / LAMPORTS_PER_SOL;
-  console.log("SOL残高:", solBalanceFormatted.toFixed(6), "SOL");
+  console.log("SOL balance:", solBalanceFormatted.toFixed(6), "SOL");
 
-  // wSOLアカウント確認
+  // Check wSOL account
   const userWsolAccount = await getAssociatedTokenAddress(NATIVE_MINT, user.publicKey);
   try {
     const wsolAccountInfo = await program.provider.connection.getTokenAccountBalance(userWsolAccount);
-    console.log("wSOL残高:", wsolAccountInfo.value.uiAmount || 0, "wSOL");
+    console.log("wSOL balance:", wsolAccountInfo.value.uiAmount || 0, "wSOL");
   } catch (error) {
-    console.log("wSOLアカウントが見つかりません（SOL投資時に自動作成されます）");
+    console.log("wSOL account not found (will be auto-created when investing SOL)");
   }
 
   if (solBalanceFormatted < 0.01) {
-    console.log("SOL残高が少ないです。https://faucet.solana.com/ から取得してください");
+    console.log("SOL balance is low. Get more from https://faucet.solana.com/");
   }
 }
 ```
 
-## 一括実行スクリプト
+## Batch Execution Scripts
 
-### package.json への追加
+### Add to package.json
 
 ```json
 {
@@ -526,160 +526,159 @@ async function checkSol() {
 }
 ```
 
-### 実行例
+### Example Execution
 
-#### 事前準備
+#### Preparation
 
 ```bash
-# 1. 環境設定
+# 1. Environment setup
 cd /path/to/sloomo/contract
-yarn install                # 依存関係インストール
-anchor build                # コントラクトビルド
+yarn install                # Install dependencies
+anchor build                # Build contract
 
-# 2. Solana CLI設定
+# 2. Solana CLI setup
 solana config set --url devnet
-solana airdrop 5            # devnet SOL取得
+solana airdrop 5            # Get devnet SOL
 
-# 3. USDCの取得（USDC投資する場合）
-# https://spl-token-faucet.com/ でdevnet USDCを取得
+# 3. Get USDC (for USDC investment)
+# Get devnet USDC at https://spl-token-faucet.com/
 ```
 
-#### 基本的なワークフロー
+#### Basic Workflow
 
 ```bash
-# 1. 初期確認
-solana balance               # SOL残高確認
-solana address              # ウォレットアドレス確認
+# 1. Initial check
+solana balance               # Check SOL balance
+solana address              # Check wallet address
 
-# 2. ポートフォリオ初期化
+# 2. Initialize portfolio
 yarn portfolio:init
 
-# 3. 残高確認
-yarn portfolio:check-sol    # SOL残高確認
+# 3. Check balance
+yarn portfolio:check-sol    # Check SOL balance
 
-# 4. 投資実行
-yarn portfolio:deposit 1 SOL        # 1 SOL投資
+# 4. Execute investment
+yarn portfolio:deposit 1 SOL        # Invest 1 SOL
 
-# 5. 状態確認
-yarn portfolio:check                 # ポートフォリオ全体確認
+# 5. Check state
+yarn portfolio:check                 # Check entire portfolio
 
-# 6. アロケーション調整（必要に応じて）
+# 6. Adjust allocation (if needed)
 yarn portfolio:add-allocation
 
-# 7. リバランス実行
+# 7. Execute rebalance
 yarn portfolio:rebalance
 
-# 8. 最終状態確認
+# 8. Final state check
 yarn portfolio:check
 ```
 
-
-#### デバッグ・確認用コマンド
+#### Debug/Check Commands
 
 ```bash
-# 全体状況確認
+# Check overall status
 yarn portfolio:check
 
-# 個別トークン確認
-yarn portfolio:check-sol     # SOL/wSOL関連
+# Check individual tokens
+yarn portfolio:check-sol     # SOL/wSOL related
 
-# 基本情報確認
-solana balance               # ネイティブSOL残高
-solana address              # ウォレットアドレス
-solana config get           # 設定確認
+# Check basic info
+solana balance               # Native SOL balance
+solana address              # Wallet address
+solana config get           # Check settings
 ```
 
-#### 完全テストシナリオ
+#### Complete Test Scenario
 
 ```bash
-# === 環境準備 ===
+# === Environment Preparation ===
 cd /path/to/sloomo/contract
 yarn install
 anchor build
 solana config set --url devnet
 solana airdrop 5
 
-# === 基本機能テスト ===
-# 1. ポートフォリオ初期化
+# === Basic Function Test ===
+# 1. Initialize portfolio
 yarn portfolio:init
 
-# 2. 初期状態確認
+# 2. Initial state check
 yarn portfolio:check
 yarn portfolio:check-sol
 
-# 3. SOL投資テスト
+# 3. SOL investment test
 yarn portfolio:deposit 1 SOL
 yarn portfolio:check-sol
 yarn portfolio:check
 
-# 6. 追加SOL投資テスト（様々な金額）
+# 6. Additional SOL investment test (various amounts)
 yarn portfolio:deposit 0.5 SOL
 yarn portfolio:check
 
-# 7. デフォルト投資テスト（金額指定なし）
-yarn portfolio:deposit  # SOL残高の半分がデフォルト投資される
+# 7. Default investment test (no amount specified)
+yarn portfolio:deposit  # Default is half of SOL balance invested
 yarn portfolio:check
 
-# === エラーハンドリングテスト ===
-# 残高不足テスト
-yarn portfolio:deposit 1000 SOL  # ✅ 正常に失敗（残高不足）
+# === Error Handling Test ===
+# Insufficient balance test
+yarn portfolio:deposit 1000 SOL  # ✅ Should fail (insufficient balance)
 
-# 無効な引数テスト  
-yarn portfolio:deposit abc SOL   # ✅ 正常に失敗（無効な金額）
-yarn portfolio:deposit 1 ETH     # ✅ 正常に失敗（無効なトークン）
-yarn portfolio:deposit -5 SOL    # ✅ 正常に失敗（負の金額）
+# Invalid argument test  
+yarn portfolio:deposit abc SOL   # ✅ Should fail (invalid amount)
+yarn portfolio:deposit 1 ETH     # ✅ Should fail (invalid token)
+yarn portfolio:deposit -5 SOL    # ✅ Should fail (negative amount)
 
-# === 成功確認 ===
+# === Success Confirmation ===
 yarn portfolio:check
-solana balance  # 残りのSOL確認
-echo "🎉 すべてのテストが完了しました"
+solana balance  # Check remaining SOL
+echo "🎉 All tests completed"
 
-# === 期待される結果 ===
-# - ポートフォリオ総価値: 5.79 SOL程度
-# - ユーザー残高: 2.8 SOL程度 
-# - すべてのエラーテストが適切に失敗
-# - SOL投資が正常に動作
+# === Expected Results ===
+# - Portfolio total value: about 5.79 SOL
+# - User balance: about 2.8 SOL
+# - All error tests fail as expected
+# - SOL investment works correctly
 ```
 
-#### USDC投資テスト（オプション）
+#### USDC Investment Test (Optional)
 
-USDCでもテストしたい場合：
+If you want to test with USDC:
 
 ```bash
-# USDC取得（devnet faucet）
-# https://spl-token-faucet.com/ でUSDC取得
+# Get USDC (devnet faucet)
+# Get USDC at https://spl-token-faucet.com/
 
-# USDC残高確認
+# Check USDC balance
 yarn portfolio:check-usdc
 
-# USDC投資テスト
+# USDC investment test
 yarn portfolio:deposit 100 USDC
 yarn portfolio:check-usdc
 yarn portfolio:check
 
-# 注意: USDCがない場合はリバランスが失敗する
-# yarn portfolio:rebalance  # USDCアカウントがないとエラー
+# Note: If you don't have USDC, rebalance will fail
+# yarn portfolio:rebalance  # Error if no USDC account
 ```
 
-## Anchor CLI での直接呼び出し
+## Direct Call with Anchor CLI
 
-### 1. IDL使用
+### 1. Using IDL
 
 ```bash
-# IDLを使用してメソッド呼び出し
+# Call method using IDL
 anchor run initialize-portfolio
 
-# カスタムスクリプト実行
+# Run custom script
 anchor run invest --provider.cluster devnet
 
-# テスト実行
+# Run tests
 anchor test --skip-deploy --provider.cluster devnet
 ```
 
-### 2. 生のトランザクション
+### 2. Raw Transaction
 
 ```bash
-# Solana CLI を使用した直接呼び出し（上級者向け）
+# Direct call using Solana CLI (advanced)
 solana program invoke \
   --program-id EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC \
   --instruction-data <base58-encoded-data> \
@@ -687,162 +686,162 @@ solana program invoke \
   --account <account2>
 ```
 
-## トラブルシューティング
+## Troubleshooting
 
-### よくあるエラー
+### Common Errors
 
-#### 1. プログラムが見つからない
+#### 1. Program Not Found
 ```bash
 Error: Account EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC not found
 ```
-**対処法:**
+**Solution:**
 ```bash
-# プログラムの存在確認
+# Check if program exists
 solana account EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC
 
-# 再デプロイ
+# Redeploy
 anchor deploy --provider.cluster devnet
 ```
 
-#### 2. 残高不足
+#### 2. Insufficient Balance
 ```bash
 Error: insufficient funds for transaction
 ```
-**対処法:**
+**Solution:**
 ```bash
-# SOL残高確認
+# Check SOL balance
 solana balance
 
-# SOL取得
+# Get SOL
 solana airdrop 5
 
-# または faucet.solana.com を使用
+# Or use faucet.solana.com
 ```
 
-#### 3. アカウントが存在しない
+#### 3. Account Does Not Exist
 ```bash
 Error: Account does not exist or has no data
 ```
-**対処法:**
+**Solution:**
 ```bash
-# Portfolio PDAが正しく計算されているか確認
-# まず initialize_portfolio を実行
+# Check if Portfolio PDA is calculated correctly
+# Run initialize_portfolio first
 ```
 
-#### 4. 権限エラー
+#### 4. Permission Error
 ```bash
 Error: ConstraintHasOne
 ```
-**対処法:**
+**Solution:**
 ```bash
-# 正しいウォレットを使用しているか確認
+# Check if using correct wallet
 solana address
 
-# ウォレットパスの確認
+# Check wallet path
 echo $ANCHOR_WALLET
 ```
 
-#### 5. wSOLアカウントエラー（SOL投資時）
+#### 5. wSOL Account Error (when investing SOL)
 ```bash
 Error: Account does not exist
 ```
-**対処法:**
+**Solution:**
 ```bash
-# wSOLトークンアカウントを作成
+# Create wSOL token account
 spl-token create-account So11111111111111111111111111111111111111112
 
-# またはSOLをwSOLに変換
+# Or convert SOL to wSOL
 spl-token wrap 1
 ```
 
-#### 6. スクリプト実行エラー
+#### 6. Script Execution Error
 ```bash
 Error: Cannot find module
 ```
-**対処法:**
+**Solution:**
 ```bash
-# 依存関係の再インストール
+# Reinstall dependencies
 cd contract
 yarn install
 
-# TypeScriptコンパイル確認
+# Check TypeScript compilation
 yarn run tsc --noEmit scripts/deposit_token.ts
 ```
 
-#### 7. プログラムIDエラー
+#### 7. Program ID Error
 ```bash
 Error: Program account does not exist
 ```
-**対処法:**
+**Solution:**
 ```bash
-# プログラムの存在確認
+# Check if program exists
 solana account EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC
 
-# プログラムの再デプロイ
+# Redeploy program
 anchor build
 anchor deploy --provider.cluster devnet
 ```
 
-#### 8. USDC Faucetアクセス問題
-**対処法:**
+#### 8. USDC Faucet Access Issue
+**Solution:**
 ```bash
-# 代替USDCトークン作成方法
+# Alternative way to create USDC token
 spl-token create-token --decimals 6
 spl-token create-account <TOKEN_MINT>
 spl-token mint <TOKEN_MINT> 1000
 
-# または別のfaucetサイトを利用
+# Or use another faucet site
 # https://faucet.quicknode.com/solana/devnet
 ```
 
-### デバッグ方法
+### Debugging Methods
 
-#### 1. ログ出力
+#### 1. Log Output
 
 ```bash
-# 詳細ログ付きで実行
+# Run with detailed logs
 RUST_LOG=debug yarn portfolio:init
 
-# Anchor ログ
+# Anchor logs
 export ANCHOR_LOG=true
 ```
 
-#### 2. 状態確認
+#### 2. State Check
 
 ```bash
-# プログラムアカウント一覧
+# List program accounts
 solana account EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC
 
-# 特定アカウントの詳細
+# Details of specific account
 solana account <PDA_ADDRESS> --output json
 ```
 
-#### 3. トランザクション確認
+#### 3. Check Transaction
 
 ```bash
-# トランザクション詳細確認
+# Check transaction details
 solana confirm <TRANSACTION_SIGNATURE>
 
-# Explorer で確認
+# Check in Explorer
 # https://explorer.solana.com/tx/<TRANSACTION_SIGNATURE>?cluster=devnet
 ```
 
-## セキュリティ注意事項
+## Security Notes
 
-1. **devnet専用**: このガイドはdevnet専用です。mainnetでは使用しないでください
-2. **秘密鍵管理**: 秘密鍵ファイルの管理に注意してください
-3. **テスト用途**: 実際の資産を扱わないようにしてください
-4. **Jupiter統合**: 実際のスワップはクライアントサイドで別途実行が必要です
-5. **SOL投資**: SOLはwrapped SOL (wSOL)として処理されます。wSOLトークンアカウントの作成が必要な場合があります
+1. **Devnet Only**: This guide is for devnet only. Do not use on mainnet.
+2. **Private Key Management**: Be careful managing private key files.
+3. **For Testing**: Do not use with real assets.
+4. **Jupiter Integration**: Actual swaps must be executed separately on the client side.
+5. **SOL Investment**: SOL is processed as wrapped SOL (wSOL). You may need to create a wSOL token account.
 
-## 追加リソース
+## Additional Resources
 
-- [Solana CLI ドキュメント](https://docs.solana.com/cli)
-- [Anchor ドキュメント](https://project-serum.github.io/anchor/)
+- [Solana CLI Documentation](https://docs.solana.com/cli)
+- [Anchor Documentation](https://project-serum.github.io/anchor/)
 - [Solana Explorer (devnet)](https://explorer.solana.com/?cluster=devnet)
-- [Jupiter API ドキュメント](https://docs.jup.ag/)
+- [Jupiter API Documentation](https://docs.jup.ag/)
 
 ---
 
-**最終更新**: 2024年12月  
-**バージョン**: v0.1.1 - USDC/SOL投資対応
+**Last updated**: December 2024  
+**Version**: v0.1.1 - USDC/SOL investment supported

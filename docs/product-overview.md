@@ -1,87 +1,60 @@
-# Product Overview / プロダクト概要
+# Product Overview
 
 Comprehensive product overview, features, and specifications for Sloomo Portfolio.
-Sloomo Portfolioの包括的なプロダクト概要、機能、仕様。
 
-## 📋 Product Description / プロダクト説明
+## 📋 Product Description
 
 **Sloomo** is a mobile-first portfolio management application that revolutionizes xStock equity token investment management on Solana. By combining intuitive visual portfolio editing with 1-tap automatic allocation functionality, it makes traditional stock investing accessible with blockchain speed and efficiency.
 
-**Sloomo**は、Solana上でのxStock equity token投資管理を革新するモバイルファーストのポートフォリオ管理アプリケーションです。直感的なビジュアルポートフォリオ編集機能と1タップ自動配分機能を組み合わせることで、従来の株式投資をブロックチェーンの速度と効率性でアクセスしやすくします。
-
-### Vision / ビジョン
+### Vision
 
 Transform traditional stock investment through:
-従来の株式投資を以下で変革：
 
 - **Visual Portfolio Management**: Interactive pie chart interface for intuitive stock allocation
-- **ビジュアルポートフォリオ管理**: 直感的な株式配分のためのインタラクティブ円グラフインターフェース
 - **1-Tap Rebalancing**: Automatic transaction generation for portfolio rebalancing
-- **1タップリバランス**: ポートフォリオリバランスのための自動トランザクション生成
 - **Real-time Market Data**: Live stock price visualization via xStock integration
-- **リアルタイム市場データ**: xStock統合によるライブ株価可視化
 - **Mobile-First Design**: Optimized for Solana Mobile Stack
-- **モバイルファーストデザイン**: Solana Mobile Stackに最適化
 
-## 🎯 Problem Statement / 解決すべき課題
+## 🎯 Problem Statement
 
 Current stock investment solutions are fragmented and complex:
-現在の株式投資ソリューションは断片化されており、複雑です：
 
-### Pain Points / 課題
+### Pain Points
 
 - **Manual Tracking**: Users must manually track stock prices across multiple brokers
-- **手動追跡**: ユーザーは複数のブローカーの株価を手動で追跡する必要がある
 - **Complex Rebalancing**: Portfolio rebalancing requires technical knowledge and multiple trades
-- **複雑なリバランス**: ポートフォリオのリバランスには技術的知識と複数の取引が必要
 - **Lack of Unified Interface**: No single interface for visualizing and adjusting stock allocations
-- **統一されたインターフェースの欠如**: 株式配分を可視化・調整するための単一インターフェースが存在しない
 - **High Cognitive Load**: Optimal investment strategy execution requires significant mental effort
-- **高い認知負荷**: 最適な投資戦略実行のための重大な精神的努力が必要
 - **Time Limitations**: Traditional securities trading is limited to market hours
-- **時間制限**: 従来の証券取引は取引時間に制限がある
 
-## 💡 Solution / ソリューション
+## 💡 Solution
 
 Sloomo provides a comprehensive xStock equity token 1-tap portfolio allocation platform:
-Sloomoは包括的なxStock equity token 1-tapポートフォリオ配分プラットフォームを提供します：
 
-### 🎯 Visual Portfolio Management / ビジュアルポートフォリオ管理
+### 🎯 Visual Portfolio Management
 
 - **Interactive Pie Chart Interface**: Intuitive stock allocation with drag-and-drop editing
-- **インタラクティブ円グラフインターフェース**: ドラッグ&ドロップ編集による直感的な株式配分
 - **Real-time Portfolio Value Tracking**: Live stock price visualization and portfolio monitoring
-- **リアルタイムポートフォリオ価値追跡**: ライブ株価可視化とポートフォリオ監視
 - **1-Tap Rebalancing**: Automatic transaction generation with single-tap execution
-- **1タップリバランス**: シングルタップ実行による自動トランザクション生成
 - **Progressive Disclosure**: Advanced trading features revealed gradually
-- **段階的開示**: 高度な取引機能の段階的な表示
 
-### 📊 Intelligent Stock Allocation / インテリジェント株式配分
+### 📊 Intelligent Stock Allocation
 
 - **Automated Discovery**: Trending stocks and recommended equity opportunities
-- **自動発見**: トレンド株式と推奨equity機会
 - **xStock Integration**: Real-time price tracking across major equity markets
-- **xStock統合**: 主要equity市場間でのリアルタイム価格追跡
 - **Smart Rebalancing Suggestions**: AI-driven recommendations based on market conditions
-- **スマートリバランス提案**: 市場状況に基づくAI駆動の推奨
 - **Historical Analysis**: Portfolio holding performance analysis and trend tracking
-- **履歴分析**: ポートフォリオ保有のパフォーマンス分析とトレンド追跡
 
-### 🚀 Blockchain-Native Features / ブロックチェーンネイティブ機能
+### 🚀 Blockchain-Native Features
 
 - **24/7 Trading**: No market hour limitations with blockchain infrastructure
-- **24/7取引**: ブロックチェーンインフラによる市場時間制限なし
 - **Instant Settlement**: Immediate transaction finality on Solana
-- **即座決済**: Solana上での即座のトランザクション確定
 - **Low Fees**: Minimal transaction costs compared to traditional brokers
-- **低手数料**: 従来のブローカーと比較した最小限の取引コスト
 - **Wallet Integration**: Seamless Mobile Wallet Adapter connectivity
-- **ウォレット統合**: シームレスなMobile Wallet Adapter接続
 
-## 🏗️ Technical Architecture / 技術アーキテクチャ
+## 🏗️ Technical Architecture
 
-### Frontend Stack / フロントエンドスタック
+### Frontend Stack
 
 | Layer | Technology | Purpose |
 |-------|------------|---------|
@@ -92,7 +65,7 @@ Sloomoは包括的なxStock equity token 1-tapポートフォリオ配分プラ�
 | **Wallet** | @solana/wallet-adapter-react-native | Phantom, Solflare integration |
 | **Testing** | Jest, React Native Testing Library | Comprehensive test coverage |
 
-### Backend Integration / バックエンド統合
+### Backend Integration
 
 | Service | Technology | Purpose |
 |---------|------------|---------|
@@ -101,31 +74,30 @@ Sloomoは包括的なxStock equity token 1-tapポートフォリオ配分プラ�
 | **Jupiter** | Jupiter API | Token swapping and liquidity |
 | **Storage** | AsyncStorage | Local state persistence |
 
-## 📱 Key Features / 主要機能
+## 📱 Key Features
 
-### Core Features / コア機能
+### Core Features
 
-1. **Portfolio Dashboard / ポートフォリオダッシュボード**: Integrated view of all equity token holdings with real-time values
-2. **Visual Allocation Editor / ビジュアル配分エディター**: Drag-and-drop pie chart interface for portfolio adjustments
-3. **Stock Discovery / 株式発見**: Automated xStock equity token scanning for optimal investment opportunities
-4. **Smart Rebalancing / スマートリバランス**: 1-click portfolio optimization with fee preview
-5. **Performance Analysis / パフォーマンス分析**: Historical tracking and price prediction
+1. **Portfolio Dashboard**: Integrated view of all equity token holdings with real-time values
+2. **Visual Allocation Editor**: Drag-and-drop pie chart interface for portfolio adjustments
+3. **Stock Discovery**: Automated xStock equity token scanning for optimal investment opportunities
+4. **Smart Rebalancing**: 1-click portfolio optimization with fee preview
+5. **Performance Analysis**: Historical tracking and price prediction
 
-### Advanced Features / 高度な機能
+### Advanced Features
 
-1. **Asset Search & Discovery / 資産検索・発見**: Intelligent filtering by price, risk, and sector
-2. **Transaction History / トランザクション履歴**: Comprehensive audit trail with gas optimization
-3. **Notification System / 通知システム**: Real-time alerts for price movements and rebalancing opportunities
-4. **Multi-Market Support / マルチマーケットサポート**: Integration with major markets via xStock
+1. **Asset Search & Discovery**: Intelligent filtering by price, risk, and sector
+2. **Transaction History**: Comprehensive audit trail with gas optimization
+3. **Notification System**: Real-time alerts for price movements and rebalancing opportunities
+4. **Multi-Market Support**: Integration with major markets via xStock
 
-## 🎨 UI/UX Design Principles / UI/UXデザイン原則
+## 🎨 UI/UX Design Principles
 
-### Design Philosophy / デザイン哲学
+### Design Philosophy
 
 Based on successful patterns from modern mobile design:
-モダンなモバイルデザインの成功パターンに基づく：
 
-#### Information Hierarchy / 情報階層
+#### Information Hierarchy
 
 | Level | Screen | Purpose |
 |-------|--------|---------|
@@ -134,13 +106,13 @@ Based on successful patterns from modern mobile design:
 | **L3** | Asset Detail | Individual stock prices, market cap, history |
 | **L4** | Settings/History | Auxiliary functions |
 
-#### UX Patterns / UXパターン
+#### UX Patterns
 
-- **Progressive Onboarding**: Features revealed gradually / 段階的オンボーディング
-- **Faceted Search Modal**: Ticker/sector search for asset addition / ファセット検索モーダル
-- **1-Tap Rebalancing**: Pie chart changes → automatic transaction generation / 1タップリバランス
+- **Progressive Onboarding**: Features revealed gradually
+- **Faceted Search Modal**: Ticker/sector search for asset addition
+- **1-Tap Rebalancing**: Pie chart changes → automatic transaction generation
 
-## 📊 Data Models / データモデル
+## 📊 Data Models
 
 ```typescript
 /** Equity Token */
@@ -171,75 +143,60 @@ export interface Portfolio {
 }
 ```
 
-## 🎯 Success Metrics / 成功指標
+## 🎯 Success Metrics
 
-### User Experience Metrics / ユーザーエクスペリエンス指標
+### User Experience Metrics
 
 - **Time to First Investment**: < 60 seconds from app open
-- **初回投資までの時間**: アプリ開始から60秒未満
 - **Rebalance Completion Rate**: > 90% of initiated rebalances
-- **リバランス完了率**: 開始されたリバランスの90%以上
 - **User Retention**: 7-day retention > 70%
-- **ユーザー継続率**: 7日継続率70%以上
 
-### Technical Performance / 技術パフォーマンス
+### Technical Performance
 
 - **App Load Time**: < 2 seconds on mid-range devices
-- **アプリ読み込み時間**: ミッドレンジデバイスで2秒未満
 - **Animation Performance**: 60fps during interactions
-- **アニメーションパフォーマンス**: インタラクション中60fps
 - **Transaction Success Rate**: > 99% on devnet
-- **トランザクション成功率**: devnetで99%以上
 
-### Business Metrics / ビジネス指標
+### Business Metrics
 
 - **Daily Active Users**: Growth tracking
-- **日次アクティブユーザー**: 成長追跡
 - **Transaction Volume**: Portfolio management activity
-- **トランザクション量**: ポートフォリオ管理活動
 - **Feature Adoption**: Advanced feature usage rates
-- **機能採用**: 高度な機能の使用率
 
-## 🔒 Security Considerations / セキュリティ考慮事項
+## 🔒 Security Considerations
 
-### Wallet Security / ウォレットセキュリティ
+### Wallet Security
 
 - **Private Key Management**: Never store private keys
-- **秘密鍵管理**: 秘密鍵を保存しない
 - **Secure Communication**: All API calls over HTTPS
-- **セキュア通信**: 全API呼び出しをHTTPS経由
 - **Transaction Signing**: Client-side only
-- **トランザクション署名**: クライアントサイドのみ
 
-### Data Protection / データ保護
+### Data Protection
 
 - **Local Storage**: Encrypted sensitive data
-- **ローカルストレージ**: 機密データの暗号化
 - **API Security**: Rate limiting and authentication
-- **APIセキュリティ**: レート制限と認証
 - **Privacy**: Minimal data collection
-- **プライバシー**: 最小限のデータ収集
 
-## 🚀 Future Roadmap / 今後のロードマップ
+## 🚀 Future Roadmap
 
-### Phase 1: Core Features (MVP) / フェーズ1: コア機能（MVP）
-- ✅ Basic portfolio visualization / 基本ポートフォリオ可視化
-- ✅ Simple rebalancing / シンプルリバランス
-- ✅ xStock integration / xStock統合
+### Phase 1: Core Features (MVP)
+- ✅ Basic portfolio visualization
+- ✅ Simple rebalancing
+- ✅ xStock integration
 
-### Phase 2: Advanced Features / フェーズ2: 高度な機能
-- 🔄 AI-powered allocation suggestions / AI駆動配分提案
-- 🔄 Advanced charting and analytics / 高度なチャートと分析
-- 🔄 Social features and sharing / ソーシャル機能と共有
+### Phase 2: Advanced Features
+- 🔄 AI-powered allocation suggestions
+- 🔄 Advanced charting and analytics
+- 🔄 Social features and sharing
 
-### Phase 3: Ecosystem Expansion / フェーズ3: エコシステム拡張
-- 📋 Additional DeFi integrations / 追加DeFi統合
-- 📋 Cross-chain portfolio management / クロスチェーンポートフォリオ管理
-- 📋 Institutional features / 機関投資家機能
+### Phase 3: Ecosystem Expansion
+- 📋 Additional DeFi integrations
+- 📋 Cross-chain portfolio management
+- 📋 Institutional features
 
 ---
 
-**🎯 Key Deliverables / 主要な成果物**
+**🎯 Key Deliverables**
 
 ```
 ✨ Expo-ready mock UI for immediate testing
@@ -250,5 +207,3 @@ export interface Portfolio {
 ```
 
 This product overview provides the foundation for building an intuitive, powerful, and accessible portfolio management application that bridges traditional finance and DeFi through superior user experience design.
-
-このプロダクト概要は、優れたユーザーエクスペリエンスデザインを通じて従来の金融とDeFiを橋渡しする、直感的で強力かつアクセシブルなポートフォリオ管理アプリケーションを構築するための基盤を提供します。

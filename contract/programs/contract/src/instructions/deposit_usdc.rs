@@ -7,10 +7,10 @@ use crate::state::Portfolio;
 use crate::error::SloomoError;
 use crate::utils::{validate_reentrancy, validate_amount};
 
-/// USDC deposit のアカウント構造
+/// Account structure for USDC deposit
 #[derive(Accounts)]
 pub struct DepositUsdc<'info> {
-    /// deposit先ポートフォリオ
+    /// Destination portfolio for deposit
     #[account(
         mut,
         seeds = [b"portfolio", owner.key().as_ref()],
@@ -19,7 +19,7 @@ pub struct DepositUsdc<'info> {
     )]
     pub portfolio: Account<'info, Portfolio>,
 
-    /// ユーザーのUSDCアカウント（送金元）
+    /// User's USDC account (source)
     #[account(
         mut,
         associated_token::mint = usdc_mint,
@@ -27,7 +27,7 @@ pub struct DepositUsdc<'info> {
     )]
     pub user_usdc_account: Account<'info, TokenAccount>,
 
-    /// ポートフォリオのUSDCボルト（送金先）
+    /// Portfolio's USDC vault (destination)
     #[account(
         init_if_needed,
         payer = owner,
@@ -38,29 +38,29 @@ pub struct DepositUsdc<'info> {
     )]
     pub portfolio_usdc_vault: Account<'info, TokenAccount>,
 
-    /// USDCミント
+    /// USDC mint
     pub usdc_mint: Account<'info, Mint>,
 
-    /// トランザクション実行者（ポートフォリオ所有者）
+    /// Transaction executor (portfolio owner)
     #[account(mut)]
     pub owner: Signer<'info>,
 
-    /// SPLトークンプログラム
+    /// SPL token program
     pub token_program: Program<'info, Token>,
-    /// 関連付けトークンプログラム
+    /// Associated token program
     pub associated_token_program: Program<'info, AssociatedToken>,
-    /// システムプログラム
+    /// System program
     pub system_program: Program<'info, System>,
 }
 
-/// USDCをデポジットする
+/// Deposit USDC
 ///
 /// # Arguments
-/// * `ctx` - トランザクションコンテキスト
-/// * `amount` - デポジット金額（USDC基準）
+/// * `ctx` - Transaction context
+/// * `amount` - Deposit amount (USDC basis)
 ///
 /// # Returns
-/// * `Result<()>` - 成功時はOk(())、失敗時はエラー
+/// * `Result<()>` - Ok(()) on success, error on failure
 pub fn handler(
     ctx: Context<DepositUsdc>,
     amount: u64,
@@ -68,17 +68,17 @@ pub fn handler(
     let portfolio = &mut ctx.accounts.portfolio;
     let clock = Clock::get()?;
 
-    // 共通バリデーション関数を使用
+    // Use common validation functions
     validate_amount(amount)?;
     validate_reentrancy(portfolio)?;
     
-    // バリデーション: ユーザーのUSDC残高
+    // Validation: User's USDC balance
     require!(
         ctx.accounts.user_usdc_account.amount >= amount,
         SloomoError::InsufficientBalance
     );
 
-    // SPL Token転送の実行
+    // Execute SPL Token transfer
     let transfer_instruction = Transfer {
         from: ctx.accounts.user_usdc_account.to_account_info(),
         to: ctx.accounts.portfolio_usdc_vault.to_account_info(),
@@ -92,17 +92,17 @@ pub fn handler(
 
     transfer(cpi_ctx, amount)?;
 
-    // ポートフォリオ総価値を更新
+    // Update portfolio total value
     portfolio.total_value = portfolio.total_value
         .checked_add(amount)
         .ok_or(SloomoError::MathOverflow)?;
 
     portfolio.updated_at = clock.unix_timestamp;
 
-    // パフォーマンススナップショットを追加
+    // Add performance snapshot
     portfolio.add_performance_snapshot(clock.unix_timestamp)?;
 
-    // イベント発行
+    // Emit event
     emit!(UsdcDeposited {
         portfolio: portfolio.key(),
         owner: portfolio.owner,
@@ -111,22 +111,22 @@ pub fn handler(
     });
 
     msg!(
-        "USDC deposit完了: {} USDC をデポジットしました",
+        "USDC deposit completed: {} USDC deposited",
         amount as f64 / 1_000_000.0 // USDC has 6 decimals
     );
 
     Ok(())
 }
 
-/// USDC deposit実行イベント
+/// USDC deposit execution event
 #[event]
 pub struct UsdcDeposited {
-    /// ポートフォリオアカウント
+    /// Portfolio account
     pub portfolio: Pubkey,
-    /// ポートフォリオ所有者
+    /// Portfolio owner
     pub owner: Pubkey,
-    /// デポジット金額
+    /// Deposit amount
     pub amount: u64,
-    /// デポジット実行時刻
+    /// Deposit execution time
     pub timestamp: i64,
 }

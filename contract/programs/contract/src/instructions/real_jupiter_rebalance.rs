@@ -8,10 +8,10 @@ use crate::utils::{
     validate_rebalance_frequency
 };
 
-/// 実際の資産移動を伴うJupiterリバランスのアカウント構造
+/// Account structure for Jupiter rebalancing with actual asset movement
 #[derive(Accounts)]
 pub struct RealJupiterRebalance<'info> {
-    /// リバランス対象ポートフォリオ
+    /// Portfolio to be rebalanced
     #[account(
         mut,
         seeds = [b"portfolio", owner.key().as_ref()],
@@ -20,11 +20,11 @@ pub struct RealJupiterRebalance<'info> {
     )]
     pub portfolio: Account<'info, Portfolio>,
 
-    /// トランザクション実行者（ポートフォリオ所有者）
+    /// Transaction executor (portfolio owner)
     #[account(mut)]
     pub owner: Signer<'info>,
 
-    /// USDC（ベースカレンシー）のトークンアカウント
+    /// USDC (base currency) token account
     #[account(
         mut,
         associated_token::mint = usdc_mint,
@@ -32,18 +32,18 @@ pub struct RealJupiterRebalance<'info> {
     )]
     pub usdc_token_account: Account<'info, TokenAccount>,
 
-    /// USDCミント
+    /// USDC mint
     pub usdc_mint: Account<'info, Mint>,
 
-    /// SPLトークンプログラム
+    /// SPL token program
     pub token_program: Program<'info, Token>,
     
-    /// システムプログラム
+    /// System program
     pub system_program: Program<'info, System>,
 }
 
-/// 実際の資産移動を伴うJupiterリバランスを実行する
-/// クライアントで設定した目標配分%に基づいて、USDC から各 stablecoin への swap 指示を出力
+/// Execute Jupiter rebalancing with actual asset movement
+/// Output swap instructions from USDC to each stablecoin based on target allocation % set by client
 pub fn handler(
     ctx: Context<RealJupiterRebalance>,
     target_allocations: Vec<AllocationTarget>,
@@ -52,32 +52,32 @@ pub fn handler(
     let portfolio = &mut ctx.accounts.portfolio;
     let clock = Clock::get()?;
 
-    // 共通バリデーション
+    // Common validation
     validate_rebalance_frequency(portfolio, &clock)?;
     validate_reentrancy(portfolio)?;
     
-    // リバランス開始フラグを設定
+    // Set rebalancing start flag
     portfolio.is_rebalancing = true;
 
-    // バリデーション: 目標配分の妥当性チェック
+    // Validation: Check target allocation validity
     let total_target: u16 = target_allocations.iter()
         .map(|t| t.target_percentage)
         .sum();
     validate_allocation_percentage(total_target)?;
 
-    // USDC残高をベースとした総ポートフォリオ価値
+    // Total portfolio value based on USDC balance
     let usdc_balance = ctx.accounts.usdc_token_account.amount;
     require!(usdc_balance > 0, SloomoError::InsufficientBalance);
 
-    msg!("リバランス開始: USDC残高 {} をベースに目標配分に応じて各 stablecoin に配分", usdc_balance);
+    msg!("Rebalancing started: allocating USDC balance {} to each stablecoin according to target allocation", usdc_balance);
 
-    // 各目標配分に対してJupiter swap指示を出力
+    // Output Jupiter swap instructions for each target allocation
     for target in &target_allocations {
         let target_amount = (usdc_balance as u128 * target.target_percentage as u128 / 10000u128) as u64;
         
         if target_amount > 0 {
             msg!(
-                "Jupiter swap 指示: USDC {} -> target_mint {} (目標金額: {}, 配分: {}%)",
+                "Jupiter swap instruction: USDC {} -> target_mint {} (target amount: {}, allocation: {}%)",
                 usdc_balance,
                 target.mint,
                 target_amount,
@@ -86,20 +86,20 @@ pub fn handler(
         }
     }
 
-    // ポートフォリオの配分データを更新
+    // Update portfolio allocation data
     update_portfolio_allocations(
         portfolio,
         &target_allocations,
         usdc_balance,
     )?;
 
-    // 状態更新
+    // State update
     portfolio.last_rebalance = clock.unix_timestamp;
     portfolio.updated_at = clock.unix_timestamp;
     portfolio.total_value = usdc_balance;
     portfolio.is_rebalancing = false;
 
-    // イベント発行
+    // Emit event
     emit!(StablecoinPortfolioRebalanced {
         owner: portfolio.owner,
         usdc_amount: usdc_balance,
@@ -109,7 +109,7 @@ pub fn handler(
     });
 
     msg!(
-        "ポートフォリオリバランス完了: USDC {} を {} 種類の stablecoin に配分",
+        "Portfolio rebalancing completed: allocated USDC {} to {} types of stablecoins",
         usdc_balance,
         target_allocations.len()
     );
@@ -117,34 +117,34 @@ pub fn handler(
     Ok(())
 }
 
-/// ポートフォリオ配分データを更新
+/// Update portfolio allocation data
 fn update_portfolio_allocations(
     portfolio: &mut Portfolio,
     target_allocations: &[AllocationTarget],
     usdc_balance: u64,
 ) -> Result<()> {
     for target in target_allocations {
-        // 既存の配分データを検索または新規作成
+        // Search for existing allocation data or create new
         if let Some(allocation) = portfolio.allocations
             .iter_mut()
             .find(|a| a.mint == target.mint) {
             
-            // 目標配分に基づいて更新
+            // Update based on target allocation
             let target_amount = (usdc_balance as u128 * target.target_percentage as u128 / 10000u128) as u64;
             allocation.current_amount = target_amount;
             allocation.target_percentage = target.target_percentage;
         } else {
-            // 新規の配分データを追加（必要に応じて）
+            // Add new allocation data (as needed)
             let target_amount = (usdc_balance as u128 * target.target_percentage as u128 / 10000u128) as u64;
             
-            // 注意: 実際の実装では mint から symbol を解決する必要があります
-            // ここでは簡略化しています
+            // Note: In actual implementation, need to resolve symbol from mint
+            // Simplified here
             portfolio.allocations.push(AllocationData {
                 mint: target.mint,
                 symbol: format!("STABLECOIN-{}", target.mint.to_string().chars().take(8).collect::<String>()),
                 current_amount: target_amount,
                 target_percentage: target.target_percentage,
-                apy: 0, // クライアントサイドで管理
+                apy: 0, // Managed client-side
                 last_yield_update: 0,
             });
         }
@@ -153,18 +153,18 @@ fn update_portfolio_allocations(
     Ok(())
 }
 
-/// Stablecoin ポートフォリオリバランスイベント
+/// Stablecoin portfolio rebalancing event
 #[event]
 pub struct StablecoinPortfolioRebalanced {
-    /// ポートフォリオ所有者
+    /// Portfolio owner
     pub owner: Pubkey,
-    /// リバランス時のUSDC金額
+    /// USDC amount at rebalancing
     pub usdc_amount: u64,
-    /// 配分された stablecoin 種類数
+    /// Number of allocated stablecoin types
     pub target_allocations_count: u8,
-    /// リバランス実行時刻
+    /// Rebalancing execution time
     pub timestamp: i64,
-    /// 使用されたスリッページ
+    /// Slippage used
     pub slippage_bps: u16,
 }
 

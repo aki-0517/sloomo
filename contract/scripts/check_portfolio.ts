@@ -112,7 +112,7 @@ async function checkPortfolio() {
     
     if (portfolioData.allocations.length > 0 && portfolioData.totalValue.toNumber() > 0) {
       let needsRebalancing = false;
-      const threshold = 5; // 5%の閾値
+      const threshold = 5; // 5% threshold
       
       portfolioData.allocations.forEach((allocation) => {
         const currentPercentage = (allocation.currentAmount.toNumber() / portfolioData.totalValue.toNumber()) * 100;

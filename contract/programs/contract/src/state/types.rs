@@ -1,19 +1,19 @@
 use anchor_lang::prelude::*;
 
-/// 配分データ構造
+/// Allocation data structure
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct AllocationData {
-    /// トークンミントアドレス
+    /// Token mint address
     pub mint: Pubkey,
-    /// トークンシンボル (例: AAPL, GOOGL)
+    /// Token symbol (e.g.: AAPL, GOOGL)
     pub symbol: String,
-    /// 現在の投資額
+    /// Current investment amount
     pub current_amount: u64,
-    /// 目標配分比率 (basis points: 10000 = 100%)
+    /// Target allocation percentage (basis points: 10000 = 100%)
     pub target_percentage: u16,
-    /// 年間利回り (basis points: 100 = 1%)
+    /// Annual percentage yield (basis points: 100 = 1%)
     pub apy: u16,
-    /// 最後の利回り更新時刻
+    /// Last yield update timestamp
     pub last_yield_update: i64,
 }
 
@@ -26,14 +26,14 @@ impl AllocationData {
         8; // last_yield_update
 }
 
-/// パフォーマンススナップショット
+/// Performance snapshot
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct PerformanceSnapshot {
-    /// 記録時刻
+    /// Record timestamp
     pub timestamp: i64,
-    /// その時点での総価値
+    /// Total value at that time
     pub total_value: u64,
-    /// 成長率 (basis points: 100 = 1%)
+    /// Growth rate (basis points: 100 = 1%)
     pub growth_rate: i16,
 }
 
@@ -43,34 +43,34 @@ impl PerformanceSnapshot {
         2; // growth_rate
 }
 
-/// ポートフォリオ初期化パラメータ
+/// Portfolio initialization parameters
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct InitPortfolioParams {
-    /// 初期配分設定
+    /// Initial allocation settings
     pub initial_allocations: Vec<AllocationParams>,
-    /// 初期SOL投資額（lamports）
+    /// Initial SOL investment amount (lamports)
     pub initial_sol_amount: u64,
-    /// Jupiter自動スワップを実行するかどうか
+    /// Whether to execute Jupiter auto-swap
     pub enable_jupiter_swap: bool,
 }
 
-/// 配分パラメータ
+/// Allocation parameters
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct AllocationParams {
-    /// トークンミントアドレス
+    /// Token mint address
     pub mint: Pubkey,
-    /// トークンシンボル
+    /// Token symbol
     pub symbol: String,
-    /// 目標配分比率 (basis points)
+    /// Target allocation percentage (basis points)
     pub target_percentage: u16,
 }
 
-/// リバランス目標配分
+/// Rebalance target allocation
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct AllocationTarget {
-    /// トークンミントアドレス
+    /// Token mint address
     pub mint: Pubkey,
-    /// 目標配分比率 (basis points)
+    /// Target allocation percentage (basis points)
     pub target_percentage: u16,
 }
 

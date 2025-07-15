@@ -2,36 +2,36 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum SloomoError {
-    #[msg("無効な配分比率")]
+    #[msg("Invalid allocation percentage")]
     InvalidAllocationPercentage,
-    #[msg("リバランスに必要な残高が不足")]
+    #[msg("Insufficient balance for rebalancing")]
     InsufficientBalance,
-    #[msg("ポートフォリオが見つかりません")]
+    #[msg("Portfolio not found")]
     PortfolioNotFound,
-    #[msg("認証されていないアクセス")]
+    #[msg("Unauthorized access")]
     Unauthorized,
-    #[msg("無効なトークンミント")]
+    #[msg("Invalid token mint")]
     InvalidTokenMint,
-    #[msg("リバランス実行が頻繁すぎます")]
+    #[msg("Rebalance execution too frequent")]
     RebalanceTooFrequent,
-    #[msg("総配分が100%を超えています")]
+    #[msg("Total allocation exceeds 100%")]
     AllocationOverflow,
-    #[msg("利回り更新が頻繁すぎます")]
+    #[msg("Yield update too frequent")]
     YieldUpdateTooFrequent,
-    #[msg("数値オーバーフロー")]
+    #[msg("Math overflow")]
     MathOverflow,
-    #[msg("無効なAPY値")]
+    #[msg("Invalid APY value")]
     InvalidApy,
-    #[msg("無効な金額")]
+    #[msg("Invalid amount")]
     InvalidAmount,
-    #[msg("リバランス不要")]
+    #[msg("No rebalance needed")]
     NoRebalanceNeeded,
-    #[msg("リバランス実行中")]
+    #[msg("Rebalance in progress")]
     RebalanceInProgress,
-    #[msg("Jupiter API エラー")]
+    #[msg("Jupiter API error")]
     JupiterApiError,
-    #[msg("スワップ実行失敗")]
+    #[msg("Swap execution failed")]
     SwapExecutionFailed,
-    #[msg("クォート取得失敗")]
+    #[msg("Quote retrieval failed")]
     QuoteRetrievalFailed,
 }

@@ -1,5 +1,5 @@
 /**
- * ポートフォリオ初期化スクリプト
+ * Portfolio initialization script
  * Usage: yarn portfolio:init
  */
 
@@ -9,19 +9,19 @@ import { SloomoPortfolio } from "../target/types/sloomo_portfolio";
 
 async function initializePortfolio() {
   try {
-    console.log("=== ポートフォリオ初期化開始 ===");
+    console.log("=== Portfolio initialization started ===");
 
-    // プロバイダー設定
+    // Provider setup
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
     
     const program = anchor.workspace.SloomoPortfolio as anchor.Program<SloomoPortfolio>;
     const user = provider.wallet;
 
-    console.log("ユーザー:", user.publicKey.toString());
-    console.log("プログラムID:", program.programId.toString());
+    console.log("User:", user.publicKey.toString());
+    console.log("Program ID:", program.programId.toString());
 
-    // Portfolio PDA生成
+    // Generate Portfolio PDA
     const [portfolioPda, bump] = await PublicKey.findProgramAddress(
       [Buffer.from("portfolio"), user.publicKey.toBuffer()],
       program.programId
@@ -30,7 +30,7 @@ async function initializePortfolio() {
     console.log("Portfolio PDA:", portfolioPda.toString());
     console.log("Bump:", bump);
 
-    // 初期配分設定（例：SOLとUSDCの60:40分割）
+    // Initial allocation settings (e.g., 60:40 split between SOL and USDC)
     const initialAllocations = [
       {
         mint: new PublicKey("So11111111111111111111111111111111111111112"), // WSOL
@@ -44,28 +44,28 @@ async function initializePortfolio() {
       },
     ];
 
-    console.log("初期配分設定:");
+    console.log("Initial allocation settings:");
     initialAllocations.forEach((allocation, index) => {
       console.log(`  ${index + 1}. ${allocation.symbol}: ${allocation.targetPercentage / 100}%`);
-      console.log(`     ミント: ${allocation.mint.toString()}`);
+      console.log(`     Mint: ${allocation.mint.toString()}`);
     });
 
-    // 既存ポートフォリオの確認
+    // Check existing portfolio
     try {
       const existingPortfolio = await program.account.portfolio.fetch(portfolioPda);
-      console.log("⚠️  ポートフォリオは既に初期化されています");
-      console.log("既存ポートフォリオ情報:");
-      console.log("  所有者:", existingPortfolio.owner.toString());
-      console.log("  配分数:", existingPortfolio.allocations.length);
-      console.log("  総価値:", existingPortfolio.totalValue.toString());
+      console.log("⚠️  Portfolio is already initialized");
+      console.log("Existing portfolio information:");
+      console.log("  Owner:", existingPortfolio.owner.toString());
+      console.log("  Number of allocations:", existingPortfolio.allocations.length);
+      console.log("  Total value:", existingPortfolio.totalValue.toString());
       return;
     } catch (error) {
-      // ポートフォリオが存在しない場合は続行
-      console.log("新しいポートフォリオを作成します...");
+      // Continue if portfolio doesn't exist
+      console.log("Creating new portfolio...");
     }
 
-    // ポートフォリオ初期化実行
-    console.log("初期化トランザクション送信中...");
+    // Execute portfolio initialization
+    console.log("Sending initialization transaction...");
     const tx = await program.methods
       .initializePortfolio({ initialAllocations })
       .accounts({
@@ -75,43 +75,43 @@ async function initializePortfolio() {
       } as any)
       .rpc();
 
-    console.log("✅ ポートフォリオ初期化完了!");
-    console.log("トランザクション:", tx);
+    console.log("✅ Portfolio initialization completed!");
+    console.log("Transaction:", tx);
     console.log("Explorer:", `https://explorer.solana.com/tx/${tx}?cluster=devnet`);
 
-    // 初期化されたポートフォリオの確認
+    // Check initialized portfolio
     const portfolioData = await program.account.portfolio.fetch(portfolioPda);
     
-    console.log("\n=== 初期化されたポートフォリオ情報 ===");
-    console.log("所有者:", portfolioData.owner.toString());
-    console.log("総価値:", portfolioData.totalValue.toString());
-    console.log("配分数:", portfolioData.allocations.length);
-    console.log("作成日時:", new Date(portfolioData.createdAt.toNumber() * 1000));
+    console.log("\n=== Initialized Portfolio Information ===");
+    console.log("Owner:", portfolioData.owner.toString());
+    console.log("Total value:", portfolioData.totalValue.toString());
+    console.log("Number of allocations:", portfolioData.allocations.length);
+    console.log("Created at:", new Date(portfolioData.createdAt.toNumber() * 1000));
     
     portfolioData.allocations.forEach((allocation, index) => {
-      console.log(`\n配分 ${index + 1}:`);
-      console.log(`  シンボル: ${allocation.symbol}`);
-      console.log(`  ミント: ${allocation.mint.toString()}`);
-      console.log(`  目標比率: ${allocation.targetPercentage / 100}%`);
-      console.log(`  現在額: ${allocation.currentAmount.toString()}`);
+      console.log(`\nAllocation ${index + 1}:`);
+      console.log(`  Symbol: ${allocation.symbol}`);
+      console.log(`  Mint: ${allocation.mint.toString()}`);
+      console.log(`  Target percentage: ${allocation.targetPercentage / 100}%`);
+      console.log(`  Current amount: ${allocation.currentAmount.toString()}`);
       console.log(`  APY: ${allocation.apy / 100}%`);
     });
 
   } catch (error) {
-    console.error("❌ ポートフォリオ初期化エラー:");
+    console.error("❌ Portfolio initialization error:");
     console.error(error);
     
     if (error.message.includes("already in use")) {
-      console.log("💡 ヒント: ポートフォリオは既に初期化されています");
+      console.log("💡 Hint: Portfolio is already initialized");
     } else if (error.message.includes("insufficient funds")) {
-      console.log("💡 ヒント: SOL残高が不足しています。'solana airdrop 2' を実行してください");
+      console.log("💡 Hint: Insufficient SOL balance. Run 'solana airdrop 2'");
     } else if (error.message.includes("InvalidAllocationPercentage")) {
-      console.log("💡 ヒント: 配分の合計が100%になっていません");
+      console.log("💡 Hint: Allocation total does not equal 100%");
     }
   }
 }
 
-// スクリプト実行
+// Script execution
 if (require.main === module) {
   initializePortfolio().catch(console.error);
 }

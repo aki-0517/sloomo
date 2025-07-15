@@ -9,10 +9,10 @@ use crate::utils::{
     JupiterSolSwapHelper
 };
 
-/// SOLベースのJupiterリバランスのアカウント構造
+/// Account structure for SOL-based Jupiter rebalancing
 #[derive(Accounts)]
 pub struct SolJupiterRebalance<'info> {
-    /// リバランス対象ポートフォリオ
+    /// Portfolio to be rebalanced
     #[account(
         mut,
         seeds = [b"portfolio", owner.key().as_ref()],
@@ -21,11 +21,11 @@ pub struct SolJupiterRebalance<'info> {
     )]
     pub portfolio: Account<'info, Portfolio>,
 
-    /// トランザクション実行者（ポートフォリオ所有者）
+    /// Transaction executor (portfolio owner)
     #[account(mut)]
     pub owner: Signer<'info>,
 
-    /// wrapped SOL（wSOL）のトークンアカウント
+    /// Wrapped SOL (wSOL) token account
     #[account(
         mut,
         associated_token::mint = wsol_mint,
@@ -33,18 +33,18 @@ pub struct SolJupiterRebalance<'info> {
     )]
     pub wsol_token_account: Account<'info, TokenAccount>,
 
-    /// wSOLミント（Native Mint）
+    /// wSOL mint (Native Mint)
     pub wsol_mint: Account<'info, Mint>,
 
-    /// SPLトークンプログラム
+    /// SPL token program
     pub token_program: Program<'info, Token>,
     
-    /// システムプログラム
+    /// System program
     pub system_program: Program<'info, System>,
 }
 
-/// SOLベースのJupiterリバランスを実行する
-/// wrapped SOL（wSOL）から各トークンへのJupiterスワップを計算し、リバランス指示を出力
+/// Execute SOL-based Jupiter rebalancing
+/// Calculate Jupiter swaps from wrapped SOL (wSOL) to each token and output rebalancing instructions
 pub fn handler(
     ctx: Context<SolJupiterRebalance>,
     target_allocations: Vec<AllocationTarget>,
@@ -53,57 +53,57 @@ pub fn handler(
     let portfolio = &mut ctx.accounts.portfolio;
     let clock = Clock::get()?;
 
-    // 共通バリデーション
+    // Common validation
     validate_rebalance_frequency(portfolio, &clock)?;
     validate_reentrancy(portfolio)?;
     
-    // リバランス開始フラグを設定
+    // Set rebalancing start flag
     portfolio.is_rebalancing = true;
 
-    // バリデーション: 目標配分の妥当性チェック
+    // Validation: Check target allocation validity
     let total_target: u16 = target_allocations.iter()
         .map(|t| t.target_percentage)
         .sum();
     validate_allocation_percentage(total_target)?;
 
-    // wSOL残高をベースとした総ポートフォリオ価値
+    // Total portfolio value based on wSOL balance
     let wsol_balance = ctx.accounts.wsol_token_account.amount;
     require!(wsol_balance > 0, SloomoError::InsufficientBalance);
 
-    msg!("SOLリバランス開始: wSOL残高 {} lamports をベースに目標配分に応じて各トークンに配分", wsol_balance);
+    msg!("SOL rebalancing started: allocating wSOL balance {} lamports to each token according to target allocation", wsol_balance);
 
-    // 現在の配分と目標配分からスワップ操作を計算
+    // Calculate swap operations from current and target allocations
     let swap_operations = JupiterSolSwapHelper::calculate_swap_operations(
         &portfolio.allocations,
         &target_allocations,
         wsol_balance,
     )?;
 
-    // 各スワップ操作をログ出力（実際のスワップはクライアントサイドで実行）
+    // Log each swap operation (actual swap executed client-side)
     for operation in &swap_operations {
         JupiterSolSwapHelper::log_swap_operation(operation)?;
     }
 
     if swap_operations.is_empty() {
-        msg!("スワップ操作は不要です - 既に目標配分に近い状態です");
+        msg!("No swap operations needed - already close to target allocation");
     } else {
-        msg!("計算されたスワップ操作数: {}", swap_operations.len());
+        msg!("Calculated swap operations count: {}", swap_operations.len());
     }
 
-    // ポートフォリオの配分データを更新
+    // Update portfolio allocation data
     update_portfolio_allocations(
         portfolio,
         &target_allocations,
         wsol_balance,
     )?;
 
-    // 状態更新
+    // State update
     portfolio.last_rebalance = clock.unix_timestamp;
     portfolio.updated_at = clock.unix_timestamp;
     portfolio.total_value = wsol_balance;
     portfolio.is_rebalancing = false;
 
-    // イベント発行
+    // Emit event
     emit!(SolPortfolioRebalanced {
         owner: portfolio.owner,
         wsol_amount: wsol_balance,
@@ -113,7 +113,7 @@ pub fn handler(
     });
 
     msg!(
-        "SOLポートフォリオリバランス完了: wSOL {} lamports を {} 種類のトークンに配分",
+        "SOL portfolio rebalancing completed: allocated wSOL {} lamports to {} types of tokens",
         wsol_balance,
         target_allocations.len()
     );
@@ -121,27 +121,27 @@ pub fn handler(
     Ok(())
 }
 
-/// ポートフォリオ配分データを更新
+/// Update portfolio allocation data
 fn update_portfolio_allocations(
     portfolio: &mut Portfolio,
     target_allocations: &[AllocationTarget],
     wsol_balance: u64,
 ) -> Result<()> {
     for target in target_allocations {
-        // 既存の配分データを検索または新規作成
+        // Search for existing allocation data or create new
         if let Some(allocation) = portfolio.allocations
             .iter_mut()
             .find(|a| a.mint == target.mint) {
             
-            // 目標配分に基づいて更新
+            // Update based on target allocation
             let target_amount = (wsol_balance as u128 * target.target_percentage as u128 / 10000u128) as u64;
             allocation.current_amount = target_amount;
             allocation.target_percentage = target.target_percentage;
         } else {
-            // 新規の配分データを追加
+            // Add new allocation data
             let target_amount = (wsol_balance as u128 * target.target_percentage as u128 / 10000u128) as u64;
             
-            // mintから適切なシンボルを取得する（実装では外部サービスやマッピングを使用）
+            // Get appropriate symbol from mint (in implementation, use external service or mapping)
             let symbol = derive_symbol_from_mint(&target.mint);
             
             portfolio.allocations.push(AllocationData {
@@ -149,7 +149,7 @@ fn update_portfolio_allocations(
                 symbol,
                 current_amount: target_amount,
                 target_percentage: target.target_percentage,
-                apy: 0, // クライアントサイドで管理
+                apy: 0, // Managed client-side
                 last_yield_update: 0,
             });
         }
@@ -158,13 +158,13 @@ fn update_portfolio_allocations(
     Ok(())
 }
 
-/// mintアドレスからシンボルを導出する（簡易実装）
+/// Derive symbol from mint address (simplified implementation)
 fn derive_symbol_from_mint(mint: &Pubkey) -> String {
-    // 実際の実装では、既知のmintアドレスのマッピングや
-    // オンチェーンメタデータから取得する
+    // In actual implementation, get from known mint address mapping or
+    // on-chain metadata
     let mint_str = mint.to_string();
     
-    // 一般的なdevnetトークンのmintアドレスマッピング
+    // Common devnet token mint address mapping
     match mint_str.as_str() {
         "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU" => "USDC".to_string(),
         "So11111111111111111111111111111111111111112" => "SOL".to_string(),
@@ -172,17 +172,17 @@ fn derive_symbol_from_mint(mint: &Pubkey) -> String {
     }
 }
 
-/// SOL ポートフォリオリバランスイベント
+/// SOL portfolio rebalancing event
 #[event]
 pub struct SolPortfolioRebalanced {
-    /// ポートフォリオ所有者
+    /// Portfolio owner
     pub owner: Pubkey,
-    /// リバランス時のwSOL金額
+    /// wSOL amount at rebalancing
     pub wsol_amount: u64,
-    /// 配分されたトークン種類数
+    /// Number of allocated token types
     pub target_allocations_count: u8,
-    /// リバランス実行時刻
+    /// Rebalancing execution time
     pub timestamp: i64,
-    /// 使用されたスリッページ
+    /// Slippage used
     pub slippage_bps: u16,
 }

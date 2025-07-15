@@ -1,94 +1,94 @@
-# クライアント・コントラクト連携
+# Client-Contract Integration
 
-Solana Mobile Stack (MWA) を使ったReact Native アプリとAnchor スマートコントラクトの連携
-
----
-
-## 目次
-
-1. [システム概要](#システム概要)
-2. [アーキテクチャ](#アーキテクチャ)
-3. [環境設定](#環境設定)
-4. [Mobile Wallet Adapter の設定](#mobile-wallet-adapter-の設定)
-5. [データ管理・キャッシュ](#データ管理・キャッシュ)
-6. [開発](#開発)
-7. [テスト戦略](#テスト戦略)
-8. [トラブルシューティング](#トラブルシューティング)
+Integration of React Native app and Anchor smart contract using Solana Mobile Stack (MWA)
 
 ---
 
-## システム概要
+## Table of Contents
 
-### 全体の流れ
+1. [System Overview](#system-overview)
+2. [Architecture](#architecture)
+3. [Environment Setup](#environment-setup)
+4. [Mobile Wallet Adapter Setup](#mobile-wallet-adapter-setup)
+5. [Data Management & Caching](#data-management--caching)
+6. [Development](#development)
+7. [Test Strategy](#test-strategy)
+8. [Troubleshooting](#troubleshooting)
+
+---
+
+## System Overview
+
+### Overall Flow
 
 ```
-                                                            
+                                                         
    React Native        Mobile Wallet         Solana Network 
    + Expo SDK             Adapter             + Jupiter API  
-                                                            
                                                          
+                                                      
         ↓                      ↓                      ↓    
-     UI層                   認証層                  ロジック層   
+     UI Layer               Auth Layer              Logic Layer   
      - Paper                - MWA                  - Rust  
      - Query                - Auth                 - IDL   
      - Jupiter              - USDC Rebalance      - Stablecoin   
-                                                           
+                                                        
 ```
 
-### Stablecoinポートフォリオ管理フロー
+### Stablecoin Portfolio Management Flow
 
 ```typescript
-// 初期リバランス
-// 1. USDCをdeposit
+// Initial rebalance
+// 1. Deposit USDC
 anchorProgram.methods.depositUsdc()
   ↓
-// 2. 株式トークン選択・%設定してアロケーション作成
+// 2. Select equity tokens and set % to create allocation
 anchorProgram.methods.addOrUpdateAllocation()
   ↓
-// 3. リバランス実行
+// 3. Execute rebalance
 anchorProgram.methods.realJupiterRebalance()
   ↓
-// 4. Jupiter API経由でUSDC→株式トークンをswap
+// 4. Swap USDC to equity tokens via Jupiter API
 jupiterSwapInstructions()
   ↓
-// 5. 設定アロケーション比率で保有割合を調整
+// 5. Adjust holdings according to allocation ratio
 
-// 適宜リバランス
-// 1. UIで株式トークン追加またはアロケーション編集
+// Occasional rebalance
+// 1. Add equity token or edit allocation in UI
 anchorProgram.methods.addOrUpdateAllocation()
   ↓
-// 2. リバランス実行
+// 2. Execute rebalance
 anchorProgram.methods.realJupiterRebalance()
   ↓
-// 3. Jupiter API経由で必要なswapを実行
+// 3. Execute necessary swaps via Jupiter API
 jupiterSwapInstructions()
   ↓
-// 4. データ更新とUI反映 
+// 4. Update data and reflect in UI 
 queryClient.invalidateQueries()
 ```
 
 ---
 
-## アーキテクチャ
+## Architecture
 
-### 1. ディレクトリ構造 
+### 1. Directory Structure
 
 ```
 sloomo/
-   app/                    # React Native クライアント
+   app/                    # React Native client
       src/
-         anchor/         # 生成されたAnchor型定義
-         components/     # UIコンポーネント
-         hooks/          # カスタムフック
-         utils/          # ユーティリティ関数
-   contract/               # Anchor スマートコントラクト
+         anchor/         # Generated Anchor type definitions
+         components/     # UI components
+         hooks/          # Custom hooks
+         utils/          # Utility functions
+   contract/               # Anchor smart contract
       programs/
       tests/
       target/
-   docs/                   # ドキュメント
+   docs/                   # Documentation
 ```
 
-### 2. 依存関係
+### 2. Dependencies
 
 ```json
 // app/package.json
@@ -104,18 +104,18 @@ sloomo/
 }
 ```
 
-### 3. IDL とクライアント連携
+### 3. IDL and Client Integration
 
 ```bash
-# contract/ でIDLを生成
+# Generate IDL in contract/
 cd contract
 anchor build
 
-# IDLをクライアントにコピー
+# Copy IDL to client
 cp target/idl/sloomo_portfolio.json ../app/src/anchor/
 ```
 
-### 4. Jupiter API統合
+### 4. Jupiter API Integration
 
 ```typescript
 // app/src/utils/jupiterClient.ts
@@ -156,9 +156,9 @@ export class JupiterClient {
 
 ---
 
-## 環境設定
+## Environment Setup
 
-### 1. Anchor プログラム設定
+### 1. Anchor Program Setup
 
 ```typescript
 // app/src/anchor/types.ts
@@ -167,7 +167,7 @@ import { SloomoPortfolio } from "./sloomo_portfolio";
 
 export type SloomoPortfolioProgram = Program<SloomoPortfolio>;
 
-// Anchor アカウント型定義
+// Anchor account type definitions
 export interface PortfolioAccount {
   owner: PublicKey;
   bump: number;
@@ -185,7 +185,7 @@ export interface AllocationData {
   symbol: string;
   currentAmount: BN;
   targetPercentage: number; // basis points (10000 = 100%)
-  apy: number; // basis points (クライアントサイドで管理)
+  apy: number; // basis points (managed client-side)
   lastYieldUpdate: BN;
 }
 
@@ -196,7 +196,7 @@ export interface PerformanceSnapshot {
 }
 ```
 
-### 2. プログラムフック
+### 2. Program Hook
 
 ```typescript
 // app/src/hooks/useAnchorProgram.tsx
@@ -212,7 +212,7 @@ export function useAnchorProgram(): SloomoPortfolioProgram | null {
 
   if (!selectedAccount) return null;
 
-  // MWAとの統合のためプロバイダーを作成
+  // Create provider for MWA integration
   const provider = new AnchorProvider(
     connection,
     {
@@ -231,7 +231,7 @@ export function useAnchorProgram(): SloomoPortfolioProgram | null {
 }
 ```
 
-### 3. PDA ユーティリティ関数
+### 3. PDA Utility Functions
 
 ```typescript
 // app/src/utils/pdaUtils.ts
@@ -259,9 +259,9 @@ export function getEquityTokenAccountPda(
 
 ---
 
-## Mobile Wallet Adapter の設定
+## Mobile Wallet Adapter Setup
 
-### 1. Stablecoinリバランス実行フック
+### 1. Stablecoin Rebalance Execution Hook
 
 ```typescript
 // app/src/hooks/useStablecoinRebalance.tsx
@@ -291,14 +291,14 @@ export function useStablecoinRebalance() {
 
       const [portfolioPda] = getPortfolioPda(wallet.selectedAccount.publicKey);
       
-      // USDCトークンアカウント
+      // USDC token account
       const usdcMint = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"); // devnet USDC
       const usdcTokenAccount = await getAssociatedTokenAddress(
         usdcMint,
         wallet.selectedAccount.publicKey
       );
       
-      // Anchorインストラクション作成 (リバランス指示)
+      // Create Anchor instruction (rebalance directive)
       const rebalanceInstruction = await program.methods
         .realJupiterRebalance(
           params.targetAllocations,
@@ -314,14 +314,14 @@ export function useStablecoinRebalance() {
         })
         .instruction();
 
-      // Jupiter スワップ命令を取得
+      // Get Jupiter swap instructions
       const jupiterInstructions = await this.getJupiterSwapInstructions(
         params.targetAllocations,
         usdcMint,
         wallet.selectedAccount.publicKey
       );
 
-      // トランザクション作成
+      // Create transaction
       const { blockhash, lastValidBlockHeight } = 
         await connection.getLatestBlockhash();
       
@@ -333,11 +333,11 @@ export function useStablecoinRebalance() {
 
       const transaction = new VersionedTransaction(message);
 
-      // MWA でトランザクション実行
+      // Execute transaction with MWA
       return await wallet.signAndSendTransaction(transaction);
     },
     onSuccess: () => {
-      // キャッシュ更新
+      // Update cache
       queryClient.invalidateQueries({ queryKey: ["portfolio"] });
       queryClient.invalidateQueries({ queryKey: ["token-balances"] });
     },
@@ -350,7 +350,7 @@ export function useStablecoinRebalance() {
   ) {
     const instructions = [];
     
-    // USDC残高を取得
+    // Get USDC balance
     const usdcBalance = await connection.getTokenAccountBalance(
       await getAssociatedTokenAddress(usdcMint, userPublicKey)
     );
@@ -379,7 +379,7 @@ export function useStablecoinRebalance() {
 }
 ```
 
-### 2. データ取得クエリフック
+### 2. Data Fetch Query Hook
 
 ```typescript
 // app/src/hooks/usePortfolioData.tsx
@@ -397,7 +397,7 @@ export function usePortfolioAccount({ owner }: { owner: PublicKey }) {
       try {
         return await program.account.portfolio.fetch(portfolioPda);
       } catch (error) {
-        // アカウントが存在しない場合
+        // If account does not exist
         if (error.message.includes("Account does not exist")) {
           return null;
         }
@@ -416,11 +416,11 @@ export function useStablecoinBalances({ owner }: { owner: PublicKey }) {
     queryFn: async () => {
       if (!owner) return [];
 
-      // yield-bearing stablecoin ミントアドレス一覧
+      // List of yield-bearing stablecoin mint addresses
       const stablecoinMints = [
         new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"), // USDC
         new PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"), // USDT
-        // 他のyield-bearing stablecoin
+        // Other yield-bearing stablecoins
       ];
 
       const balances = [];
@@ -435,7 +435,7 @@ export function useStablecoinBalances({ owner }: { owner: PublicKey }) {
             decimals: balance.value.decimals,
           });
         } catch (error) {
-          // アカウントが存在しない場合は0とする
+          // If account does not exist, set to 0
           balances.push({
             mint,
             balance: 0,
@@ -453,9 +453,9 @@ export function useStablecoinBalances({ owner }: { owner: PublicKey }) {
 
 ---
 
-## データ管理・キャッシュ
+## Data Management & Caching
 
-### 1. React Query 設定
+### 1. React Query Setup
 
 ```typescript
 // app/src/providers/QueryClientProvider.tsx
@@ -464,10 +464,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30 * 1000, // 30秒
-      cacheTime: 5 * 60 * 1000, // 5分
+      staleTime: 30 * 1000, // 30 seconds
+      cacheTime: 5 * 60 * 1000, // 5 minutes
       retry: (failureCount, error) => {
-        // 特定のエラーはリトライしない
+        // Do not retry for specific errors
         return failureCount < 3 && !error.message.includes("Account does not exist");
       },
     },
@@ -475,7 +475,7 @@ const queryClient = new QueryClient({
 });
 ```
 
-### 2. コンテキスト管理
+### 2. Context Management
 
 ```typescript
 // app/src/providers/PortfolioProvider.tsx
@@ -523,37 +523,37 @@ export function usePortfolio() {
 
 ---
 
-## 開発
+## Development
 
-### ステップ 1: Anchor プログラム準備
+### Step 1: Prepare Anchor Program
 
 ```bash
-# 1. contract/ でプログラムをビルド
+# 1. Build program in contract/
 cd contract
 anchor build
 anchor test
 
-# 2. IDL をクライアントにコピー
+# 2. Copy IDL to client
 cp target/idl/sloomo_portfolio.json ../app/src/anchor/
 ```
 
-### ステップ 2: 型定義・ユーティリティ作成
+### Step 2: Create Type Definitions & Utilities
 
 ```typescript
-// app/src/anchor/generated.ts にAnchor アカウント型定義を生成
+// Generate Anchor account type definitions in app/src/anchor/generated.ts
 anchor generate --program-id F4Cq84a2mtt4cH8eKP4bWf4K3td7gHYzjyM1HP7SirdS
 ```
 
-### ステップ 3: フック実装
+### Step 3: Implement Hooks
 
 ```typescript
-// 1. useAnchorProgram 実装
-// 2. PDA ユーティリティ実装  
-// 3. usePortfolioActions 実装
-// 4. usePortfolioData 実装
+// 1. Implement useAnchorProgram
+// 2. Implement PDA utilities  
+// 3. Implement usePortfolioActions
+// 4. Implement usePortfolioData
 ```
 
-### ステップ 4: UI コンポーネント連携
+### Step 4: Connect UI Components
 
 ```typescript
 // app/src/components/portfolio/PortfolioScreen.tsx
@@ -584,36 +584,36 @@ export function PortfolioScreen() {
 }
 ```
 
-### ステップ 5: エラーハンドリング
+### Step 5: Error Handling
 
 ```typescript
 // app/src/utils/errorHandler.ts
 export function handleAnchorError(error: any) {
   if (error?.code) {
-    // Anchor エラーコード
+    // Anchor error code
     switch (error.code) {
       case 6000:
-        return "ポートフォリオが存在しません";
+        return "Portfolio does not exist";
       case 6001:
-        return "権限がありません";
+        return "No permission";
       default:
-        return `エラーコード: ${error.code}`;
+        return `Error code: ${error.code}`;
     }
   }
   
   if (error?.message?.includes("Account does not exist")) {
-    return "アカウントが見つかりません";
+    return "Account not found";
   }
   
-  return error?.message || "不明なエラーが発生しました";
+  return error?.message || "Unknown error occurred";
 }
 ```
 
 ---
 
-## テスト戦略
+## Test Strategy
 
-### 1. 単体テスト
+### 1. Unit Tests
 
 ```typescript
 // app/src/hooks/__tests__/usePortfolioActions.test.tsx
@@ -640,35 +640,35 @@ describe("useInitializePortfolio", () => {
 });
 ```
 
-### 2. 結合テスト環境
+### 2. Integration Test Environment
 
 ```bash
-# 1. ローカルValidator でテスト
+# 1. Test with local validator
 solana-test-validator --reset
 
-# 2. コントラクトをローカルにデプロイ
+# 2. Deploy contract locally
 cd contract
 anchor deploy --provider.cluster localnet
 
-# 3. アプリを localhost に接続
-# app/src/utils/ConnectionProvider.tsx で localhost:8899 に設定
+# 3. Connect app to localhost
+# Set to localhost:8899 in app/src/utils/ConnectionProvider.tsx
 
-# 4. エミュレーター・デバイスでテスト実行
+# 4. Run tests on emulator/device
 cd app
 yarn android
 ```
 
-### 3. 機能テスト項目
+### 3. Functional Test Items
 
-- [ ] ウォレット接続・認証の動作確認
-- [ ] ポートフォリオ初期化
-- [ ] equity token アカウント作成・更新
-- [ ] リバランス実行・認証の動作確認
-- [ ] トランザクション署名とMWA連携の確認
-- [ ] エラーハンドリングの動作確認
-- [ ] オフライン時の挙動確認
+- [ ] Wallet connection & authentication
+- [ ] Portfolio initialization
+- [ ] Create/update equity token account
+- [ ] Execute rebalance & authentication
+- [ ] Transaction signing and MWA integration
+- [ ] Error handling
+- [ ] Behavior when offline
 
-### 4. パフォーマンステスト
+### 4. Performance Test
 
 ```typescript
 // app/src/__tests__/performance.test.tsx
@@ -676,7 +676,7 @@ import { measureUserInteraction } from "@testing-library/react-native";
 
 it("portfolio loading should be under 2 seconds", async () => {
   const { duration } = await measureUserInteraction(() => {
-    // ポートフォリオ読み込み実行
+    // Execute portfolio loading
   });
   
   expect(duration).toBeLessThan(2000);
@@ -685,24 +685,24 @@ it("portfolio loading should be under 2 seconds", async () => {
 
 ---
 
-## トラブルシューティング
+## Troubleshooting
 
-### よくある問題とアーキテクチャ
+### Common Issues & Architecture
 
 #### 1. "Program account not found"
 
 ```typescript
-// 解決: プログラムIDLが正しくデプロイされているか確認
+// Solution: Check if program IDL is properly deployed
 const PROGRAM_ID = new PublicKey("F4Cq84a2mtt4cH8eKP4bWf4K3td7gHYzjyM1HP7SirdS");
 
-// デプロイ済みプログラムID確認
+// Check deployed program ID
 anchor show --program-id
 ```
 
 #### 2. "Transaction simulation failed"
 
 ```typescript
-// 解決: SOL残高不足の確認
+// Solution: Check for insufficient SOL balance
 const balance = await connection.getBalance(wallet.publicKey);
 if (balance < LAMPORTS_PER_SOL * 0.01) {
   throw new Error("Insufficient SOL balance");
@@ -712,7 +712,7 @@ if (balance < LAMPORTS_PER_SOL * 0.01) {
 #### 3. "Account does not exist"
 
 ```typescript
-// 解決: PDAが正しくデリベートされているか確認
+// Solution: Check if PDA is derived correctly
 const [pda, bump] = PublicKey.findProgramAddressSync(
   [Buffer.from("portfolio"), owner.toBuffer()],
   PROGRAM_ID
@@ -720,21 +720,21 @@ const [pda, bump] = PublicKey.findProgramAddressSync(
 console.log(`PDA: ${pda.toString()}, Bump: ${bump}`);
 ```
 
-#### 4. Mobile Wallet Adapter エラー
+#### 4. Mobile Wallet Adapter Error
 
 ```typescript
-// 解決: ウォレットアプリの確認
+// Solution: Check wallet app
 try {
   await wallet.connect();
 } catch (error) {
   if (error.message.includes("no installed wallet")) {
-    // 互換性のあるウォレットアプリインストール案内:
+    // Guide to install compatible wallet app:
     showWalletInstallationGuide();
   }
 }
 ```
 
-### デバッグユーティリティ関数
+### Debug Utility Functions
 
 ```typescript
 // app/src/utils/debug.ts
@@ -749,20 +749,20 @@ export function logAccount(address: PublicKey) {
 
 ---
 
-## まとめ
+## Summary
 
-### 開発時の注意点
+### Notes for Development
 
-- **セキュリティ**: ウォレット操作は必ずMWAを通す
-- **UX配慮**: 署名確認画面など配慮
-- **トランザクション**: 適切な作成と状況の処理
-- **エラーハンドリング**: 適切なRPCエラー・ネットワーク対応
+- **Security**: Always use MWA for wallet operations
+- **UX Consideration**: Pay attention to signature confirmation screens, etc.
+- **Transactions**: Proper creation and handling of status
+- **Error Handling**: Proper handling of RPC/network errors
 
-### パフォーマンス最適化
+### Performance Optimization
 
-- **キャッシュ活用**: React Query で適切なキャッシュ・無効化処理
-- **メモ化最適化**: useMemo, useCallback の活用
-- **遅延読み込み**: 必要な時だけデータ取得・表示
-- **バッチング**: 複数処理のバッチ化でリクエスト数減
+- **Use cache**: Proper cache and invalidation with React Query
+- **Memoization**: Use useMemo, useCallback
+- **Lazy loading**: Fetch/display data only when needed
+- **Batching**: Reduce number of requests by batching multiple processes
 
-この統合により、React Native クライアントとAnchor スマートコントラクトの間で安全で効率的な連携を実現します。
+This integration enables safe and efficient communication between the React Native client and the Anchor smart contract.

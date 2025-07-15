@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Transfer, TokenAccount, Token, transfer};
 
-/// ユーザーからポートフォリオボルトへのトークン転送（投資時）
+/// Token transfer from user to portfolio vault (during investment)
 pub fn transfer_to_vault<'info>(
     user_account: &Account<'info, TokenAccount>,
     vault_account: &Account<'info, TokenAccount>, 
@@ -19,7 +19,7 @@ pub fn transfer_to_vault<'info>(
     transfer(cpi_ctx, amount)
 }
 
-/// ポートフォリオボルトからユーザーへのトークン転送（引出時）
+/// Token transfer from portfolio vault to user (during withdrawal)
 pub fn transfer_from_vault_with_signer<'info>(
     vault_account: &Account<'info, TokenAccount>,
     user_account: &Account<'info, TokenAccount>,

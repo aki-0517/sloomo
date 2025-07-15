@@ -1,12 +1,12 @@
 use anchor_lang::prelude::*;
 
-// モジュール宣言
+// Module declarations
 mod error;
 mod state;
 mod instructions;
 mod utils;
 
-// パブリックエクスポート
+// Public exports
 pub use error::*;
 pub use state::*;
 pub use instructions::*;
@@ -17,7 +17,7 @@ declare_id!("EAkD1pREBvpRtoAY88hmwKYr2qhdbU1rLYQ9sxTAzxhC");
 pub mod sloomo_portfolio {
     use super::*;
 
-    /// ポートフォリオを初期化
+    /// Initialize portfolio
     pub fn initialize_portfolio(
         ctx: Context<InitializePortfolio>,
         params: InitPortfolioParams,
@@ -25,7 +25,7 @@ pub mod sloomo_portfolio {
         instructions::initialize_portfolio::handler(ctx, params)
     }
 
-    /// USDCをdeposit
+    /// Deposit USDC
     pub fn deposit_usdc(
         ctx: Context<DepositUsdc>,
         amount: u64,
@@ -33,7 +33,7 @@ pub mod sloomo_portfolio {
         instructions::deposit_usdc::handler(ctx, amount)
     }
 
-    /// アロケーション追加/編集
+    /// Add/edit allocation
     pub fn add_or_update_allocation(
         ctx: Context<AddOrUpdateAllocation>,
         mint: Pubkey,
@@ -43,7 +43,7 @@ pub mod sloomo_portfolio {
         instructions::add_or_update_allocation::handler(ctx, mint, symbol, target_percentage)
     }
 
-    /// 実際の資産移動を伴うJupiterリバランス実行
+    /// Execute Jupiter rebalance with actual asset movement
     pub fn real_jupiter_rebalance(
         ctx: Context<RealJupiterRebalance>,
         target_allocations: Vec<AllocationTarget>,
@@ -52,7 +52,7 @@ pub mod sloomo_portfolio {
         instructions::real_jupiter_rebalance::handler(ctx, target_allocations, slippage_bps)
     }
 
-    /// SOLベースのJupiterリバランス実行
+    /// Execute SOL-based Jupiter rebalance
     pub fn sol_jupiter_rebalance(
         ctx: Context<SolJupiterRebalance>,
         target_allocations: Vec<AllocationTarget>,

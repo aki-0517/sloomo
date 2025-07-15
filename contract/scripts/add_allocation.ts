@@ -1,5 +1,5 @@
 /**
- * アロケーション追加・編集スクリプト
+ * Allocation add/edit script
  * Usage: yarn portfolio:add-allocation [symbol] [percentage] [mint]
  */
 
@@ -9,18 +9,18 @@ import { SloomoPortfolio } from "../target/types/sloomo_portfolio";
 
 async function addOrUpdateAllocation(symbol?: string, percentage?: number, mintAddress?: string) {
   try {
-    console.log("=== アロケーション追加・編集開始 ===");
+    console.log("=== Starting allocation add/edit ===");
 
-    // プロバイダー設定
+    // Provider setup
     const provider = anchor.AnchorProvider.env();
     anchor.setProvider(provider);
     
     const program = anchor.workspace.SloomoPortfolio as anchor.Program<SloomoPortfolio>;
     const user = provider.wallet;
 
-    console.log("ユーザー:", user.publicKey.toString());
+    console.log("User:", user.publicKey.toString());
 
-    // Portfolio PDA取得
+    // Get Portfolio PDA
     const [portfolioPda] = await PublicKey.findProgramAddress(
       [Buffer.from("portfolio"), user.publicKey.toBuffer()],
       program.programId
@@ -28,56 +28,56 @@ async function addOrUpdateAllocation(symbol?: string, percentage?: number, mintA
 
     console.log("Portfolio PDA:", portfolioPda.toString());
 
-    // ポートフォリオ存在確認
+    // Check portfolio existence
     let portfolioData;
     try {
       portfolioData = await program.account.portfolio.fetch(portfolioPda);
-      console.log("✅ ポートフォリオ確認完了");
+      console.log("✅ Portfolio verification completed");
     } catch (error) {
-      console.log("❌ ポートフォリオが見つかりません");
-      console.log("まず 'yarn portfolio:init' でポートフォリオを初期化してください");
+      console.log("❌ Portfolio not found");
+      console.log("Please initialize portfolio first with 'yarn portfolio:init'");
       return;
     }
 
-    // 引数の設定またはデフォルト値
+    // Argument setup or default values
     let allocationSymbol: string;
     let allocationPercentage: number;
     let allocationMint: PublicKey;
 
     if (symbol && percentage && mintAddress) {
-      // コマンドライン引数から取得
+      // Get from command line arguments
       allocationSymbol = symbol;
       allocationPercentage = percentage;
       try {
         allocationMint = new PublicKey(mintAddress);
       } catch (error) {
-        console.log("❌ 無効なミントアドレスです:", mintAddress);
+        console.log("❌ Invalid mint address:", mintAddress);
         return;
       }
     } else {
-      // デフォルト例：USDT-METの追加
+      // Default example: Add USDT-MET
       allocationSymbol = "USDT-MET";
       allocationPercentage = 20; // 20%
       allocationMint = new PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"); // devnet USDT
     }
 
-    // 目標配分比率をbasis pointsに変換（1% = 100 bp）
+    // Convert target allocation percentage to basis points (1% = 100 bp)
     const targetPercentageBps = Math.floor(allocationPercentage * 100);
 
     if (targetPercentageBps <= 0 || targetPercentageBps > 10000) {
-      console.log("❌ 無効な配分比率です（0-100%の範囲で入力してください）");
+      console.log("❌ Invalid allocation percentage (please enter in 0-100% range)");
       return;
     }
 
-    console.log("\n=== アロケーション情報 ===");
-    console.log("シンボル:", allocationSymbol);
-    console.log("ミント:", allocationMint.toString());
-    console.log("目標配分比率:", allocationPercentage + "%");
-    console.log("目標配分比率 (bp):", targetPercentageBps);
+    console.log("\n=== Allocation Information ===");
+    console.log("Symbol:", allocationSymbol);
+    console.log("Mint:", allocationMint.toString());
+    console.log("Target allocation percentage:", allocationPercentage + "%");
+    console.log("Target allocation percentage (bp):", targetPercentageBps);
 
-    // 現在の配分状況表示
-    console.log("\n=== 現在の配分状況 ===");
-    console.log("配分数:", portfolioData.allocations.length + "/10");
+    // Display current allocation status
+    console.log("\n=== Current Allocation Status ===");
+    console.log("Allocations:", portfolioData.allocations.length + "/10");
     
     let currentTotalPercentage = 0;
     const existingAllocation = portfolioData.allocations.find(
@@ -87,41 +87,41 @@ async function addOrUpdateAllocation(symbol?: string, percentage?: number, mintA
     portfolioData.allocations.forEach((allocation: any, index: number) => {
       currentTotalPercentage += allocation.targetPercentage;
       console.log(`${index + 1}. ${allocation.symbol}: ${allocation.targetPercentage / 100}%`);
-      console.log(`   ミント: ${allocation.mint.toString()}`);
+      console.log(`   Mint: ${allocation.mint.toString()}`);
     });
 
-    console.log(`現在の総配分: ${currentTotalPercentage / 100}%`);
+    console.log(`Current total allocation: ${currentTotalPercentage / 100}%`);
 
-    // 新しい総配分の計算と確認
+    // Calculate and verify new total allocation
     let newTotalPercentage = currentTotalPercentage;
     if (existingAllocation) {
-      // 既存のアロケーションを更新する場合
+      // Case: Updating existing allocation
       newTotalPercentage = newTotalPercentage - existingAllocation.targetPercentage + targetPercentageBps;
-      console.log(`\n既存のアロケーション '${allocationSymbol}' を更新します`);
-      console.log(`現在: ${existingAllocation.targetPercentage / 100}% → 新規: ${allocationPercentage}%`);
+      console.log(`\nUpdating existing allocation '${allocationSymbol}'`);
+      console.log(`Current: ${existingAllocation.targetPercentage / 100}% → New: ${allocationPercentage}%`);
     } else {
-      // 新しいアロケーションを追加する場合
+      // Case: Adding new allocation
       newTotalPercentage += targetPercentageBps;
-      console.log(`\n新しいアロケーション '${allocationSymbol}' を追加します`);
+      console.log(`\nAdding new allocation '${allocationSymbol}'`);
     }
 
-    console.log(`新しい総配分: ${newTotalPercentage / 100}%`);
+    console.log(`New total allocation: ${newTotalPercentage / 100}%`);
 
     if (newTotalPercentage > 10000) {
-      console.log("❌ 総配分が100%を超えます");
-      console.log("既存の配分を調整してから再実行してください");
+      console.log("❌ Total allocation exceeds 100%");
+      console.log("Please adjust existing allocations before retrying");
       return;
     }
 
-    // 確認メッセージ
-    console.log("\n⚠️  この操作により配分が変更されます");
+    // Confirmation message
+    console.log("\n⚠️  This operation will change allocations");
     if (newTotalPercentage < 10000) {
-      console.log(`残り配分: ${(10000 - newTotalPercentage) / 100}%`);
+      console.log(`Remaining allocation: ${(10000 - newTotalPercentage) / 100}%`);
     }
 
-    console.log("\nアロケーション追加・編集トランザクション送信中...");
+    console.log("\nSending allocation add/edit transaction...");
 
-    // アロケーション追加・編集実行
+    // Execute allocation add/edit
     const tx = await program.methods
       .addOrUpdateAllocation(
         allocationMint,
@@ -134,60 +134,60 @@ async function addOrUpdateAllocation(symbol?: string, percentage?: number, mintA
       } as any)
       .rpc();
 
-    console.log("✅ アロケーション操作完了!");
-    console.log("トランザクション:", tx);
+    console.log("✅ Allocation operation completed!");
+    console.log("Transaction:", tx);
     console.log("Explorer:", `https://explorer.solana.com/tx/${tx}?cluster=devnet`);
 
-    // 更新後の状態確認
+    // Check status after update
     const afterData = await program.account.portfolio.fetch(portfolioPda);
 
-    console.log("\n=== 更新後の配分状況 ===");
-    console.log("配分数:", afterData.allocations.length + "/10");
-    console.log("最終更新:", new Date(afterData.updatedAt.toNumber() * 1000).toLocaleString());
+    console.log("\n=== Allocation Status After Update ===");
+    console.log("Allocations:", afterData.allocations.length + "/10");
+    console.log("Last updated:", new Date(afterData.updatedAt.toNumber() * 1000).toLocaleString());
 
     let updatedTotalPercentage = 0;
     afterData.allocations.forEach((allocation: any, index: number) => {
       updatedTotalPercentage += allocation.targetPercentage;
       console.log(`${index + 1}. ${allocation.symbol}: ${allocation.targetPercentage / 100}%`);
-      console.log(`   ミント: ${allocation.mint.toString()}`);
-      console.log(`   現在額: ${allocation.currentAmount.toString()} lamports`);
+      console.log(`   Mint: ${allocation.mint.toString()}`);
+      console.log(`   Current amount: ${allocation.currentAmount.toString()} lamports`);
       console.log(`   APY: ${allocation.apy / 100}%`);
-      console.log(`   最終利回り更新: ${allocation.lastYieldUpdate.toNumber() === 0 
-        ? "未更新" 
+      console.log(`   Last yield update: ${allocation.lastYieldUpdate.toNumber() === 0 
+        ? "Not updated" 
         : new Date(allocation.lastYieldUpdate.toNumber() * 1000).toLocaleString()}`);
     });
 
-    console.log(`\n総配分: ${updatedTotalPercentage / 100}%`);
+    console.log(`\nTotal allocation: ${updatedTotalPercentage / 100}%`);
     
     if (updatedTotalPercentage < 10000) {
-      console.log(`残り配分: ${(10000 - updatedTotalPercentage) / 100}%`);
+      console.log(`Remaining allocation: ${(10000 - updatedTotalPercentage) / 100}%`);
     }
 
     if (updatedTotalPercentage === 10000) {
-      console.log("✅ 配分が100%に達しました");
+      console.log("✅ Allocation reached 100%");
     }
 
-    console.log("\n=== 次のアクション候補 ===");
-    console.log("📊 ポートフォリオ確認: yarn portfolio:check");
-    console.log("💰 USDC投資: yarn portfolio:deposit [amount]");
-    console.log("🔄 リバランス: yarn portfolio:rebalance");
-    console.log("📈 配分追加: yarn portfolio:add-allocation [symbol] [percentage] [mint]");
+    console.log("\n=== Next Action Options ===");
+    console.log("📊 Check portfolio: yarn portfolio:check");
+    console.log("💰 USDC investment: yarn portfolio:deposit [amount]");
+    console.log("🔄 Rebalance: yarn portfolio:rebalance");
+    console.log("📈 Add allocation: yarn portfolio:add-allocation [symbol] [percentage] [mint]");
 
   } catch (error) {
-    console.error("❌ アロケーション操作エラー:");
+    console.error("❌ Allocation operation error:");
     console.error(error);
     
     if (error.message.includes("InvalidAllocationPercentage")) {
-      console.log("💡 ヒント: 配分比率が無効です（0-100%の範囲で入力）");
+      console.log("💡 Hint: Invalid allocation percentage (enter in 0-100% range)");
     } else if (error.message.includes("AllocationOverflow")) {
-      console.log("💡 ヒント: 配分数が上限（10個）に達しているか、総配分が100%を超えています");
+      console.log("💡 Hint: Allocation count reached limit (10) or total allocation exceeds 100%");
     } else if (error.message.includes("InvalidTokenSymbol")) {
-      console.log("💡 ヒント: トークンシンボルが無効です");
+      console.log("💡 Hint: Invalid token symbol");
     }
   }
 }
 
-// コマンドライン引数の解析
+// Parse command line arguments
 function parseArgs() {
   const args = process.argv.slice(2);
   const symbol = args[0];
@@ -196,21 +196,21 @@ function parseArgs() {
   
   if (symbol && percentage && mintAddress) {
     if (isNaN(percentage) || percentage <= 0 || percentage > 100) {
-      console.log("❌ 無効な配分比率です（0-100%の範囲で入力）");
-      console.log("使用例: yarn portfolio:add-allocation USDT-MET 20 Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB");
+      console.log("❌ Invalid allocation percentage (enter in 0-100% range)");
+      console.log("Usage: yarn portfolio:add-allocation USDT-MET 20 Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB");
       process.exit(1);
     }
   } else if (args.length > 0 && args.length < 3) {
-    console.log("❌ 引数が不足しています");
-    console.log("使用例: yarn portfolio:add-allocation [symbol] [percentage] [mint]");
-    console.log("例: yarn portfolio:add-allocation USDT-MET 20 Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB");
+    console.log("❌ Insufficient arguments");
+    console.log("Usage: yarn portfolio:add-allocation [symbol] [percentage] [mint]");
+    console.log("Example: yarn portfolio:add-allocation USDT-MET 20 Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB");
     process.exit(1);
   }
   
   return { symbol, percentage, mintAddress };
 }
 
-// スクリプト実行
+// Script execution
 if (require.main === module) {
   const { symbol, percentage, mintAddress } = parseArgs();
   addOrUpdateAllocation(symbol, percentage, mintAddress).catch(console.error);

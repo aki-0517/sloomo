@@ -1,252 +1,252 @@
-# テスト実行サマリー
+# Test Execution Summary
 
-## テストコマンド一覧
+## Test Command List
 
-### 基本テストコマンド
+### Basic Test Commands
 
-| コマンド | 対象 | 実行時間目安 | 説明 |
-|---------|------|------------|------|
-| `yarn test:unit` | ユニットテスト | 30-60秒 | コア機能の個別テスト |
-| `yarn test:integration` | 統合テスト | 2-5分 | 完全なフロー統合テスト |
-| `yarn test:jupiter` | Jupiterテスト | 2-3分 | Jupiter統合特化テスト |
-| `yarn test:all` | 全テスト | 3-8分 | 全テスト実行 |
+| Command                | Target         | Typical Duration | Description                       |
+|------------------------|---------------|------------------|-----------------------------------|
+| `yarn test:unit`       | Unit tests     | 30-60 sec        | Individual core function tests    |
+| `yarn test:integration`| Integration    | 2-5 min          | Full flow integration tests       |
+| `yarn test:jupiter`    | Jupiter tests  | 2-3 min          | Jupiter integration-specific tests|
+| `yarn test:all`        | All tests      | 3-8 min          | Run all tests                     |
 
-### 追加テストコマンド
+### Additional Test Commands
 
-| コマンド | 機能 | 使用場面 |
-|---------|------|----------|
-| `yarn test:watch` | ウォッチモード | 開発中の継続テスト |
-| `yarn test:coverage` | カバレッジ計測 | コードカバレッジ確認 |
-| `yarn test` | Anchorテスト | 従来のテスト実行 |
+| Command                | Feature        | Use Case                       |
+|------------------------|---------------|--------------------------------|
+| `yarn test:watch`      | Watch mode    | Continuous testing during dev  |
+| `yarn test:coverage`   | Coverage      | Check code coverage            |
+| `yarn test`            | Anchor tests  | Legacy test execution          |
 
-## テスト内容別実行コマンド
+## Test Type Specific Commands
 
-### 1. ユニットテスト実行
+### 1. Run Unit Tests
 
 ```bash
-# 全ユニットテスト実行
+# Run all unit tests
 yarn test:unit
 
-# 特定のテストファイル実行
+# Run a specific test file
 yarn run ts-mocha -p ./tsconfig.json tests/unit/portfolio_core.test.ts
 yarn run ts-mocha -p ./tsconfig.json tests/unit/jupiter_utils.test.ts
 
-# ドライラン（実際に実行せずテスト構造確認）
+# Dry run (check test structure without execution)
 yarn test:unit --dry-run
 ```
 
-**実行内容**:
-- Portfolio Core Tests: 29テストケース
-- Jupiter Utils Tests: 12テストケース
-- **合計**: 41テストケース
+**Contents:**
+- Portfolio Core Tests: 29 test cases
+- Jupiter Utils Tests: 12 test cases
+- **Total**: 41 test cases
 
-### 2. 統合テスト実行
+### 2. Run Integration Tests
 
 ```bash
-# 全統合テスト実行
+# Run all integration tests
 yarn test:integration
 
-# 特定のテストファイル実行
+# Run a specific test file
 yarn run ts-mocha -p ./tsconfig.json tests/integration/real_jupiter_integration.test.ts
 ```
 
-**実行内容**:
-- 完全なポートフォリオ管理フロー
-- エラーケース統合テスト
-- 実際のトークン残高確認
-- **合計**: 10テストケース
+**Contents:**
+- Complete portfolio management flow
+- Error case integration tests
+- Actual token balance checks
+- **Total**: 10 test cases
 
-### 3. Jupiterリバランステスト実行
+### 3. Run Jupiter Rebalance Tests
 
 ```bash
-# Jupiterリバランステスト実行
+# Run Jupiter rebalance tests
 yarn test:jupiter
 
-# 詳細出力で実行
+# Run with detailed output
 yarn test:jupiter --reporter spec
 ```
 
-**実行内容**:
-- 実際の資産移動を伴うJupiterリバランス
-- Jupiterクォート記録機能
-- 複数トークンでのリバランスシナリオ
-- **合計**: 4テストケース
+**Contents:**
+- Jupiter rebalance with real asset movement
+- Jupiter quote recording feature
+- Multi-token rebalance scenarios
+- **Total**: 4 test cases
 
-## 実行前準備
+## Preparation Before Execution
 
-### 1. 環境変数設定
+### 1. Set Environment Variables
 
 ```bash
 export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
 export ANCHOR_WALLET=~/.config/solana/id.json
 ```
 
-### 2. Solanaウォレット準備
+### 2. Prepare Solana Wallet
 
 ```bash
-# ウォレット作成（未作成の場合）
+# Create wallet (if not created)
 solana-keygen new --outfile ~/.config/solana/id.json
 
-# devnetに切り替え
+# Switch to devnet
 solana config set --url devnet
 
-# テスト用SOL取得
+# Get test SOL
 solana airdrop 5
 ```
 
-### 3. コントラクトビルド・デプロイ
+### 3. Build & Deploy Contract
 
 ```bash
-# コントラクトビルド
+# Build contract
 anchor build
 
-# devnetにデプロイ
+# Deploy to devnet
 anchor deploy --provider.cluster devnet
 ```
 
-## テスト実行例
+## Test Execution Examples
 
-### 成功例
+### Success Example
 
 ```bash
 $ yarn test:unit
 
 Jupiter Utils Unit Tests
-  スワップ操作計算
-    ✔ リバランスが不要な場合は空の操作を返す
-    ✔ 配分増加が必要な場合は購入操作を生成する
+  Swap operation calculation
+    ✔ Returns empty operation if rebalance not needed
+    ✔ Generates buy operation if allocation needs increase
     ...
   
 Portfolio Core Unit Tests
-  ポートフォリオ初期化
-    ✔ 正常なパラメータでポートフォリオを初期化できる
-    ✔ 配分の合計が100%を超える場合エラーになる
+  Portfolio initialization
+    ✔ Can initialize portfolio with valid parameters
+    ✔ Error if allocation sum exceeds 100%
     ...
 
   29 passing (45s)
 ```
 
-### エラー例と対処法
+### Error Examples & Solutions
 
-#### 1. SOL不足エラー
+#### 1. SOL Insufficient Error
 ```bash
 Error: insufficient funds for spend
 ```
-**対処法**:
+**Solution:**
 ```bash
 solana airdrop 2
 ```
 
-#### 2. プログラム未デプロイエラー
+#### 2. Program Not Deployed Error
 ```bash
 Error: Account does not exist
 ```
-**対処法**:
+**Solution:**
 ```bash
 anchor build
 anchor deploy --provider.cluster devnet
 ```
 
-#### 3. エアドロップ制限エラー
+#### 3. Airdrop Rate Limit Error
 ```bash
 Error: 429 Too Many Requests
 ```
-**対処法**:
-- 時間をおいて再実行
-- https://faucet.solana.com を使用
+**Solution:**
+- Retry after some time
+- Use https://faucet.solana.com
 
-## 推奨テスト実行フロー
+## Recommended Test Execution Flow
 
-### 開発時
+### During Development
 
 ```bash
-# 1. ユニットテストで基本機能確認
+# 1. Check core functions with unit tests
 yarn test:unit
 
-# 2. 問題なければ統合テスト実行
+# 2. If no issues, run integration tests
 yarn test:integration
 
-# 3. Jupiter機能確認
+# 3. Check Jupiter features
 yarn test:jupiter
 ```
 
-### デプロイ前
+### Before Deployment
 
 ```bash
-# 1. 全テスト実行
+# 1. Run all tests
 yarn test:all
 
-# 2. カバレッジ確認
+# 2. Check coverage
 yarn test:coverage
 
-# 3. ビルド確認
+# 3. Build check
 anchor build
 ```
 
 ### CI/CD
 
 ```bash
-# 1. ユニットテストのみ（SOL制限対応）
+# 1. Unit tests only (to save SOL)
 yarn test:unit
 
-# 2. 静的解析
+# 2. Static analysis
 yarn lint
 
-# 3. ビルド確認
+# 3. Build check
 anchor build
 ```
 
-## パフォーマンス指標
+## Performance Metrics
 
-### 実行時間
+### Execution Time
 
-| テストタイプ | 最小時間 | 平均時間 | 最大時間 |
-|-------------|---------|---------|---------|
-| ユニットテスト | 30秒 | 45秒 | 60秒 |
-| 統合テスト | 2分 | 3分 | 5分 |
-| Jupiterテスト | 2分 | 2.5分 | 3分 |
-| 全テスト | 3分 | 5分 | 8分 |
+| Test Type      | Min Time | Avg Time | Max Time |
+|----------------|----------|----------|----------|
+| Unit Test      | 30 sec   | 45 sec   | 60 sec   |
+| Integration    | 2 min    | 3 min    | 5 min    |
+| Jupiter Test   | 2 min    | 2.5 min  | 3 min    |
+| All Tests      | 3 min    | 5 min    | 8 min    |
 
-### リソース使用量
+### Resource Usage
 
-- **SOL消費**: テストあたり0.01-0.05 SOL
-- **RPC呼び出し**: 50-200回/テスト
-- **メモリ使用量**: 100-500MB
+- **SOL Consumption**: 0.01-0.05 SOL per test
+- **RPC Calls**: 50-200 per test
+- **Memory Usage**: 100-500MB
 
-## トラブルシューティング
+## Troubleshooting
 
-### よくある問題
+### Common Issues
 
-1. **ネットワーク接続エラー**
-   - devnet RPC の応答確認
-   - インターネット接続確認
+1. **Network Connection Error**
+   - Check devnet RPC response
+   - Check internet connection
 
-2. **タイムアウトエラー**
-   - テストタイムアウト時間調整
-   - ネットワーク状況確認
+2. **Timeout Error**
+   - Adjust test timeout
+   - Check network conditions
 
-3. **アカウント状態エラー**
-   - ウォレット残高確認
-   - プログラムデプロイ状況確認
+3. **Account State Error**
+   - Check wallet balance
+   - Check program deployment status
 
-### ログの見方
+### How to Read Logs
 
 ```bash
-# 詳細ログ出力
+# Detailed log output
 yarn test:all --reporter spec
 
-# 失敗時のデバッグ情報
+# Debug info on failure
 yarn test:all --bail --reporter tap
 ```
 
-## 注意事項
+## Notes
 
-1. **devnet制限**: エアドロップ制限があるため、連続実行時は注意
-2. **実行順序**: 統合テストは状態を変更するため、順序を考慮
-3. **クリーンアップ**: テスト間でのアカウント状態リセット
-4. **Mock vs Real**: 現在はdevnet実行、将来的にはmock対応予定
+1. **devnet limitations**: Beware of airdrop rate limits when running repeatedly
+2. **Execution order**: Integration tests change state, so consider order
+3. **Cleanup**: Reset account state between tests
+4. **Mock vs Real**: Currently runs on devnet, mock support planned for future
 
 ---
 
-**最終更新**: 2024年12月
-**バージョン**: v0.1.0
+**Last updated**: December 2024  
+**Version**: v0.1.0

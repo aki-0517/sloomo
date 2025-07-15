@@ -4,11 +4,11 @@ use crate::state::{Portfolio, InitPortfolioParams, AllocationData, MAX_ALLOCATIO
 use crate::error::SloomoError;
 use crate::utils::{validate_allocation_percentage, jupiter::JupiterSolSwapHelper};
 
-/// ポートフォリオ初期化のアカウント構造
+/// Account structure for portfolio initialization
 #[derive(Accounts)]
 #[instruction(params: InitPortfolioParams)]
 pub struct InitializePortfolio<'info> {
-    /// 初期化するポートフォリオアカウント
+    /// Portfolio account to be initialized
     #[account(
         init,
         payer = owner,
@@ -18,15 +18,15 @@ pub struct InitializePortfolio<'info> {
     )]
     pub portfolio: Account<'info, Portfolio>,
 
-    /// ポートフォリオの所有者（料金支払い者）
+    /// Portfolio owner (fee payer)
     #[account(mut)]
     pub owner: Signer<'info>,
 
-    /// ユーザーのwSOLトークンアカウント
+    /// User's wSOL token account
     #[account(mut)]
     pub user_wsol_account: Account<'info, TokenAccount>,
 
-    /// ポートフォリオのwSOLボルトアカウント
+    /// Portfolio's wSOL vault account
     #[account(
         init,
         payer = owner,
@@ -37,24 +37,24 @@ pub struct InitializePortfolio<'info> {
     )]
     pub portfolio_wsol_vault: Account<'info, TokenAccount>,
 
-    /// wSOLミント（Native Mint）
+    /// wSOL mint (Native Mint)
     pub wsol_mint: Account<'info, Mint>,
 
-    /// システムプログラム
+    /// System program
     pub system_program: Program<'info, System>,
 
-    /// トークンプログラム
+    /// Token program
     pub token_program: Program<'info, Token>,
 }
 
-/// ポートフォリオを初期化する（SOL投資と Jupiter スワップ付き）
+/// Initialize portfolio (with SOL investment and Jupiter swap)
 ///
 /// # Arguments
-/// * `ctx` - トランザクションコンテキスト
-/// * `params` - 初期化パラメータ
+/// * `ctx` - Transaction context
+/// * `params` - Initialization parameters
 ///
 /// # Returns
-/// * `Result<()>` - 成功時はOk(())、失敗時はエラー
+/// * `Result<()>` - Ok(()) on success, error on failure
 pub fn handler(
     ctx: Context<InitializePortfolio>,
     params: InitPortfolioParams,
@@ -63,13 +63,13 @@ pub fn handler(
     let owner = &ctx.accounts.owner;
     let clock = Clock::get()?;
 
-    // バリデーション: 配分数の上限チェック
+    // Validation: Check allocation count limit
     require!(
         params.initial_allocations.len() <= MAX_ALLOCATIONS,
         SloomoError::AllocationOverflow
     );
 
-    // バリデーション: 配分比率の合計チェック
+    // Validation: Check total allocation percentage
     let total_percentage: u16 = params.initial_allocations
         .iter()
         .map(|a| a.target_percentage)
@@ -77,13 +77,13 @@ pub fn handler(
 
     validate_allocation_percentage(total_percentage)?;
 
-    // バリデーション: 初期SOL投資額チェック
+    // Validation: Check initial SOL investment amount
     require!(
         params.initial_sol_amount > 0,
         SloomoError::InvalidAmount
     );
 
-    // ポートフォリオ基本情報の設定
+    // Set portfolio basic information
     portfolio.owner = owner.key();
     portfolio.bump = ctx.bumps.portfolio;
     portfolio.total_value = params.initial_sol_amount;
@@ -92,7 +92,7 @@ pub fn handler(
     portfolio.updated_at = clock.unix_timestamp;
     portfolio.is_rebalancing = false;
 
-    // SOL投資: ユーザーのwSOLアカウントからポートフォリオボルトへ転送
+    // SOL investment: Transfer from user's wSOL account to portfolio vault
     let cpi_accounts = Transfer {
         from: ctx.accounts.user_wsol_account.to_account_info(),
         to: ctx.accounts.portfolio_wsol_vault.to_account_info(),
@@ -102,7 +102,7 @@ pub fn handler(
     let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
     transfer(cpi_ctx, params.initial_sol_amount)?;
 
-    // 配分データの初期化（wSOLから始まる）
+    // Initialize allocation data (starting with wSOL)
     portfolio.allocations = params.initial_allocations
         .into_iter()
         .map(|alloc_params| AllocationData {
@@ -119,11 +119,11 @@ pub fn handler(
         })
         .collect();
 
-    // Jupiter自動スワップが有効な場合、スワップ操作を計算してログ出力
+    // If Jupiter auto-swap is enabled, calculate swap operations and log output
     if params.enable_jupiter_swap {
-        msg!("Jupiter自動スワップを実行します...");
+        msg!("Executing Jupiter auto-swap...");
         
-        // 目標配分を作成
+        // Create target allocations
         let target_allocations: Vec<AllocationTarget> = portfolio.allocations
             .iter()
             .map(|alloc| AllocationTarget {
@@ -132,25 +132,25 @@ pub fn handler(
             })
             .collect();
 
-        // スワップ操作を計算
+        // Calculate swap operations
         let swap_operations = JupiterSolSwapHelper::calculate_swap_operations(
             &portfolio.allocations,
             &target_allocations,
             portfolio.total_value,
         )?;
 
-        // スワップ操作をログ出力（実際のスワップは外部で実行）
+        // Log swap operations (actual swap executed externally)
         for operation in swap_operations {
             JupiterSolSwapHelper::log_swap_operation(&operation)?;
         }
 
-        msg!("Jupiter スワップ指示を出力しました。外部でスワップを実行してください。");
+        msg!("Jupiter swap instructions output. Please execute swap externally.");
     }
 
-    // 空のパフォーマンス履歴で初期化
+    // Initialize with empty performance history
     portfolio.performance_history = Vec::new();
 
-    // イベント発行
+    // Emit event
     emit!(PortfolioInitialized {
         owner: owner.key(),
         portfolio: portfolio.key(),
@@ -159,22 +159,22 @@ pub fn handler(
         jupiter_swap_enabled: params.enable_jupiter_swap,
     });
 
-    msg!("ポートフォリオが正常に初期化されました: {}", portfolio.key());
-    msg!("初期SOL投資額: {} lamports", params.initial_sol_amount);
+    msg!("Portfolio successfully initialized: {}", portfolio.key());
+    msg!("Initial SOL investment amount: {} lamports", params.initial_sol_amount);
     Ok(())
 }
 
-/// ポートフォリオ初期化イベント
+/// Portfolio initialization event
 #[event]
 pub struct PortfolioInitialized {
-    /// ポートフォリオ所有者
+    /// Portfolio owner
     pub owner: Pubkey,
-    /// ポートフォリオアカウント
+    /// Portfolio account
     pub portfolio: Pubkey,
-    /// 初期配分数
+    /// Initial allocation count
     pub allocations_count: u8,
-    /// 初期SOL投資額
+    /// Initial SOL investment amount
     pub initial_sol_amount: u64,
-    /// Jupiter自動スワップが有効かどうか
+    /// Whether Jupiter auto-swap is enabled
     pub jupiter_swap_enabled: bool,
 }

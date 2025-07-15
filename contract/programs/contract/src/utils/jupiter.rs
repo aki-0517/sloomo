@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 
-/// Jupiter SOL スワップのヘルパー関数
+/// Jupiter SOL swap helper functions
 pub struct JupiterSolSwapHelper;
 
 impl JupiterSolSwapHelper {
-    /// リバランスに必要なスワップ操作を計算
+    /// Calculate swap operations required for rebalancing
     pub fn calculate_swap_operations(
         current_allocations: &[crate::state::AllocationData],
         target_allocations: &[crate::state::AllocationTarget],
@@ -20,7 +20,7 @@ impl JupiterSolSwapHelper {
                 let target_amount = (total_value as u128 * target.target_percentage as u128 / 10000u128) as u64;
                 
                 if current.current_amount > target_amount {
-                    // 売却が必要
+                    // Sale required
                     let sell_amount = current.current_amount - target_amount;
                     swap_operations.push(SwapOperation {
                         operation_type: SwapOperationType::Sell,
@@ -29,7 +29,7 @@ impl JupiterSolSwapHelper {
                         amount: sell_amount,
                     });
                 } else if current.current_amount < target_amount {
-                    // 購入が必要
+                    // Purchase required
                     let buy_amount = target_amount - current.current_amount;
                     swap_operations.push(SwapOperation {
                         operation_type: SwapOperationType::Buy,
@@ -39,7 +39,7 @@ impl JupiterSolSwapHelper {
                     });
                 }
             } else if target.target_percentage > 0 {
-                // 新しい投資が必要
+                // New investment required
                 let target_amount = (total_value as u128 * target.target_percentage as u128 / 10000u128) as u64;
                 swap_operations.push(SwapOperation {
                     operation_type: SwapOperationType::Buy,
@@ -53,12 +53,12 @@ impl JupiterSolSwapHelper {
         Ok(swap_operations)
     }
 
-    /// スワップ操作をログ出力（実際のスワップは外部で実行される）
+    /// Log swap operations (actual swap executed externally)
     pub fn log_swap_operation(operation: &SwapOperation) -> Result<()> {
         match operation.operation_type {
             SwapOperationType::Sell => {
                 msg!(
-                    "売却指示: {} から {} へ {} トークン",
+                    "Sell instruction: {} to {} for {} tokens",
                     operation.from_mint,
                     operation.to_mint,
                     operation.amount
@@ -66,7 +66,7 @@ impl JupiterSolSwapHelper {
             }
             SwapOperationType::Buy => {
                 msg!(
-                    "購入指示: {} から {} へ {} トークン",
+                    "Buy instruction: {} to {} for {} tokens",
                     operation.from_mint,
                     operation.to_mint,
                     operation.amount
@@ -77,14 +77,14 @@ impl JupiterSolSwapHelper {
     }
 }
 
-/// スワップ操作の種類
+/// Swap operation type
 #[derive(Debug, Clone, PartialEq)]
 pub enum SwapOperationType {
     Buy,
     Sell,
 }
 
-/// スワップ操作
+/// Swap operation
 #[derive(Debug, Clone)]
 pub struct SwapOperation {
     pub operation_type: SwapOperationType,
@@ -93,19 +93,19 @@ pub struct SwapOperation {
     pub amount: u64,
 }
 
-/// 共通トークンミント（devnet用）
+/// Common token mints (for devnet)
 pub struct CommonMints;
 
 impl CommonMints {
     // devnet USDC
     pub const USDC: &'static str = "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU";
     
-    /// USDCのPubkeyを取得
+    /// Get USDC Pubkey
     pub fn get_usdc_pubkey() -> Pubkey {
         Self::USDC.parse().unwrap()
     }
     
-    /// wSOLのPubkeyを取得 (Native Mint)
+    /// Get wSOL Pubkey (Native Mint)
     pub fn get_wsol_pubkey() -> Pubkey {
         "So11111111111111111111111111111111111111112".parse().unwrap()
     }

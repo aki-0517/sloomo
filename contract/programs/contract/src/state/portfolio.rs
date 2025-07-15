@@ -2,32 +2,32 @@ use anchor_lang::prelude::*;
 use crate::state::types::*;
 use crate::error::SloomoError;
 
-/// ポートフォリオアカウント
-/// ユーザーの投資ポートフォリオを管理する
+/// Portfolio account
+/// Manages user's investment portfolio
 #[account]
 pub struct Portfolio {
-    /// ポートフォリオの所有者
+    /// Portfolio owner
     pub owner: Pubkey,
-    /// PDAbump
+    /// PDA bump
     pub bump: u8,
-    /// ポートフォリオの総価値
+    /// Total portfolio value
     pub total_value: u64,
-    /// 最後にリバランスを実行した時刻
+    /// Last rebalancing execution time
     pub last_rebalance: i64,
-    /// 配分データ
+    /// Allocation data
     pub allocations: Vec<AllocationData>,
-    /// パフォーマンス履歴
+    /// Performance history
     pub performance_history: Vec<PerformanceSnapshot>,
-    /// 作成日時
+    /// Creation date
     pub created_at: i64,
-    /// 更新日時
+    /// Update date
     pub updated_at: i64,
-    /// リバランス実行中フラグ（リエントランシー防止）
+    /// Rebalancing in progress flag (reentrancy prevention)
     pub is_rebalancing: bool,
 }
 
 impl Portfolio {
-    /// アカウントサイズ計算
+    /// Account size calculation
     pub const SIZE: usize = 8 + // discriminator
         32 + // owner
         1 + // bump
@@ -40,7 +40,7 @@ impl Portfolio {
         1; // is_rebalancing
 
 
-    /// ポートフォリオの総価値を計算
+    /// Calculate total portfolio value
     pub fn calculate_total_value(&self) -> Result<u64> {
         self.allocations
             .iter()
@@ -49,7 +49,7 @@ impl Portfolio {
             .ok_or(SloomoError::MathOverflow.into())
     }
 
-    /// リバランスが必要かどうかを判定
+    /// Determine if rebalancing is needed
     pub fn needs_rebalancing(
         &self,
         target_allocations: &[AllocationTarget],
@@ -59,7 +59,7 @@ impl Portfolio {
             return Ok(false);
         }
 
-        const THRESHOLD: u16 = 500; // 5%の閾値 (basis points)
+        const THRESHOLD: u16 = 500; // 5% threshold (basis points)
 
         for target in target_allocations {
             if let Some(current) = self.allocations
@@ -84,13 +84,13 @@ impl Portfolio {
         Ok(false)
     }
 
-    /// 実際の残高に基づいてポートフォリオを更新（見かけのリバランスではない）
+    /// Update portfolio based on actual balances (not apparent rebalancing)
     pub fn update_from_real_balances(
         &mut self,
-        actual_balances: &[(Pubkey, u64)], // (mint, actual_amount)のペア
+        actual_balances: &[(Pubkey, u64)], // (mint, actual_amount) pairs
         timestamp: i64,
     ) -> Result<()> {
-        // 実際の残高に基づいて配分を更新
+        // Update allocations based on actual balances
         for (mint, actual_amount) in actual_balances {
             if let Some(allocation) = self.allocations
                 .iter_mut()
@@ -99,17 +99,17 @@ impl Portfolio {
             }
         }
 
-        // 総価値を再計算
+        // Recalculate total value
         self.total_value = self.calculate_total_value()?;
         self.updated_at = timestamp;
 
-        // パフォーマンススナップショットを追加
+        // Add performance snapshot
         self.add_performance_snapshot(timestamp)?;
 
         Ok(())
     }
 
-    /// パフォーマンススナップショットを追加
+    /// Add performance snapshot
     pub fn add_performance_snapshot(&mut self, timestamp: i64) -> Result<()> {
         let growth_rate = if self.performance_history.is_empty() {
             0
@@ -129,7 +129,7 @@ impl Portfolio {
             growth_rate,
         };
 
-        // 最大履歴数を維持
+        // Maintain maximum history count
         if self.performance_history.len() >= MAX_PERFORMANCE_SNAPSHOTS {
             self.performance_history.remove(0);
         }
@@ -139,6 +139,6 @@ impl Portfolio {
     }
 }
 
-// 定数定義
+// Constant definitions
 pub const MAX_ALLOCATIONS: usize = 10;
 pub const MAX_PERFORMANCE_SNAPSHOTS: usize = 100;
