@@ -77,16 +77,3 @@ For questions or issues, please refer to the appropriate documentation section a
 | **Developers** | [Implementation Guide](development/comprehensive-implementation-guide.md) → [Testing Guide](development/testing-guide.md) |
 | **DevOps/CLI Users** | [Devnet CLI Guide](api-reference/devnet-cli-guide.md) → [Tech Reference](api-reference/tech-reference.md) |
 | **Product Managers** | [Product Overview](product-overview.md) → [Hackathon Information](hackathon.md) |
-
-### By Language
-
-| Language | Files |
-|----------|-------|
-| **English** | Most files with primary content in English |
-| **Japanese** | [Devnet CLI Guide](api-reference/devnet-cli-guide.md), [Tech Stack](development/tech-stack.md), [Emulator Setup](emulator-setup-ja.md) |
-| **Bilingual** | [Setup Guide](getting-started/setup-guide.md), [Testing Guide](development/testing-guide.md), [Product Overview](product-overview.md) |
-
----
-
-**Last Updated**: 2025-07-14  
-**Version**: v1.0.0
