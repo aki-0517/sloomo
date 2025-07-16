@@ -116,7 +116,7 @@ style: |
   }
 ---
 
-# ![w:600](./app/assets/sloomo-logo.png)
+# ![w:600](./assets/sloomo-logo.png)
 
 <style>
 section h1 img {
@@ -136,6 +136,14 @@ section h1 img {
 
 **Built for Solana Mobile Stack**
 
+</div>
+
+---
+
+<div style="display: flex; justify-content: center; align-items: center; gap: 1000px;">
+  <img src="/Users/user/Desktop/sloomo/assets/image1.png" alt="Image 1" width="396" style="display: block;" />
+  <img src="/Users/user/Desktop/sloomo/assets/image2.png" alt="Image 2" width="396" style="display: block;" />
+  <img src="/Users/user/Desktop/sloomo/assets/image3.png" alt="Image 3" width="396" style="display: block;" />
 </div>
 
 ---
